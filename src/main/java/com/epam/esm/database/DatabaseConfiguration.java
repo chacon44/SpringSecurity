@@ -1,63 +1,49 @@
-package esm.database;
+package com.epam.esm.database;
 
-import static com.epam.esm.logs.LogMessages.CREATING_DATABASE;
+import java.sql.Connection;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 
 import javax.sql.DataSource;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
+import java.sql.SQLException;
+import java.util.logging.Logger;
 
 @Configuration
-@EnableTransactionManagement
-@Slf4j
-@ComponentScan(basePackages = "com.epam.esm.database")
-@PropertySource("classpath:application.properties")
 public class DatabaseConfiguration {
+  private static final Logger LOGGER = Logger.getLogger(DatabaseConfiguration.class.getName());
 
-    @Value("${db.driver}")
-    private String DRIVER;
-    @Value("${db.url}")
-    private String URL;
-    @Value("${user}")
-    private String USERNAME;
-    @Value("${password}")
-    private String PASSWORD;
+  @Value("${spring.datasource.url}")
+  private String url;
 
-    @Bean
-    public DataSource dataSource() throws IllegalStateException {
+  @Value("${spring.datasource.username}")
+  private String username;
 
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName(DRIVER);
-        dataSource.setUrl(URL);
-        dataSource.setUsername(USERNAME);
-        dataSource.setPassword(PASSWORD);
+  @Value("${spring.datasource.password}")
+  private String password;
 
-        Resource resource = new ClassPathResource("database.sql");
-        ResourceDatabasePopulator databasePopulator = new ResourceDatabasePopulator(resource);
-        databasePopulator.execute(dataSource);
-        log.debug(CREATING_DATABASE);
+  @Value("${spring.datasource.driver-class-name}")
+  private String driverClassName;
 
-        return dataSource;
+  @Bean
+  public DataSource dataSource() throws SQLException {
+    DataSource dataSource = DataSourceBuilder.create()
+        .url(url)
+        .username(username)
+        .password(password)
+        .driverClassName(driverClassName)
+        .build();
+
+    try (Connection conn = dataSource.getConnection()) {
+      if(conn != null) {
+        LOGGER.info("Successfully connected to the database");
+      } else {
+        LOGGER.info("Failed to establish a connection to the database");
+      }
     }
 
-
-    @Bean
-    public DataSourceTransactionManager dataSourceTransactionManager(DataSource dataSource) {
-        return new DataSourceTransactionManager(dataSource);
-    }
-
-    @Bean
-    public JdbcTemplate jdbcTemplate(DataSource dataSource) {
-
-        return new JdbcTemplate(dataSource());
-    }
-
+    return dataSource;
+  }
 }
-

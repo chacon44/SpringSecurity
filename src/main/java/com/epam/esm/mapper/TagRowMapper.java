@@ -1,4 +1,4 @@
-package esm.mapper;
+package com.epam.esm.mapper;
 
 import com.epam.esm.enums.Columns;
 import com.epam.esm.model.Tag;

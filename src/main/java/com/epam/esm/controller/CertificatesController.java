@@ -1,4 +1,4 @@
-package esm.controller;
+package com.epam.esm.controller;
 
 import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
 import com.epam.esm.model.GiftCertificate;
@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-//TODO create two profiles (dev and prod)
 @RestController
 public class CertificatesController {
 

@@ -5,12 +5,15 @@ import com.epam.esm.exceptions.Codes;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.repository.GiftCertificateTagRepository;
 import com.epam.esm.service.GiftCertificateService;
+import com.epam.esm.Main;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -21,7 +24,6 @@ import static com.epam.esm.exceptions.Codes.CERTIFICATE_FOUND;
 import static com.epam.esm.exceptions.Messages.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpStatus.CREATED;
-
 
 @ExtendWith(MockitoExtension.class)
 public class CertificateServiceTest {

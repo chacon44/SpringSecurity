@@ -1,4 +1,4 @@
-package esm.Dto.GiftCertificate;
+package com.epam.esm.Dto.GiftCertificate;
 
 import java.util.List;
 

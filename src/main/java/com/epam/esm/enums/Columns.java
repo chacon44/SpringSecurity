@@ -1,4 +1,4 @@
-package esm.enums;
+package com.epam.esm.enums;
 
 import lombok.Getter;
 

@@ -1,4 +1,4 @@
-package esm.model;
+package com.epam.esm.model;
 
 import java.util.List;
 import lombok.*;

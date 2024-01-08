@@ -1,4 +1,4 @@
-package esm.logs;
+package com.epam.esm.logs;
 
 public class LogMessages {
 

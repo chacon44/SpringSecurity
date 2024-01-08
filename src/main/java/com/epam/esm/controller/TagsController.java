@@ -1,4 +1,4 @@
-package esm.controller;
+package com.epam.esm.controller;
 
 import com.epam.esm.Dto.Tag.TagRequestDTO;
 import com.epam.esm.service.TagService;

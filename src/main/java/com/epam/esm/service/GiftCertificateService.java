@@ -1,4 +1,4 @@
-package esm.service;
+package com.epam.esm.service;
 
 import static com.epam.esm.exceptions.Codes.*;
 import static com.epam.esm.exceptions.Messages.*;

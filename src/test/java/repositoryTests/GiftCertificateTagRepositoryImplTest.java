@@ -8,10 +8,16 @@ import com.epam.esm.queries.PostgreSqlQueries;
 import com.epam.esm.repository.GiftCertificateTagRepository;
 import com.epam.esm.repository.GiftCertificateTagRepositoryImpl;
 import config.TestRepositoryConfig;
+import com.epam.esm.Main;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -24,11 +30,8 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(SpringExtension.class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@ActiveProfiles(profiles = {"h2"})
+@SpringBootTest(classes = Main.class)
 @TestPropertySource("classpath:application-test.properties")
-@ContextConfiguration(classes = {TestRepositoryConfig.class, GiftCertificateTagRepositoryImpl.class, TagRowMapper.class, GiftCertificateRowMapper.class, PostgreSqlQueries.class})
 class GiftCertificateTagRepositoryImplTest {
 
     @Autowired

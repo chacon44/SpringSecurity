@@ -4,12 +4,15 @@ import com.epam.esm.Dto.Errors.ErrorDTO;
 import com.epam.esm.model.Tag;
 import com.epam.esm.repository.GiftCertificateTagRepository;
 import com.epam.esm.service.TagService;
+import com.epam.esm.Main;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
 
 import static com.epam.esm.exceptions.Codes.TAG_BAD_REQUEST;

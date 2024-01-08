@@ -1,4 +1,4 @@
-package esm.service;
+package com.epam.esm.service;
 
 import static com.epam.esm.exceptions.Codes.TAG_BAD_REQUEST;
 import static com.epam.esm.exceptions.Codes.TAG_NOT_FOUND;

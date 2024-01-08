@@ -1,4 +1,4 @@
-package esm.repository;
+package com.epam.esm.repository;
 
 import static com.epam.esm.enums.Columns.GIFT_CERTIFICATE_ID;
 import static com.epam.esm.enums.Columns.TAG_TABLE_ID;

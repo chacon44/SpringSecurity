@@ -1,4 +1,4 @@
-package esm.validators;
+package com.epam.esm.validators;
 
 import com.epam.esm.model.GiftCertificate;
 import java.util.ArrayList;

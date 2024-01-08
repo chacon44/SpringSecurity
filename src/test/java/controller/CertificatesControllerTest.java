@@ -1,6 +1,7 @@
 package controller;
 
 import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
+import com.epam.esm.Main;
 import com.epam.esm.controller.CertificatesController;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
@@ -12,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
