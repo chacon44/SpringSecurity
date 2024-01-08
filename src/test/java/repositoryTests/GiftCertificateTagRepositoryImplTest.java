@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+//problems here
 @SpringBootTest(classes = Main.class)
 @TestPropertySource("classpath:application-test.properties")
 class GiftCertificateTagRepositoryImplTest {
