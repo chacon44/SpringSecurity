@@ -80,13 +80,13 @@ public class TagServiceTest {
     public void getTag_tagExists_returnTag(){
 
         Mockito.when(tagRepository.existsById(TAG_ID)).thenReturn(true);
-        Mockito.when(tagRepository.getReferenceById(TAG_ID)).thenReturn(tag);
+        Mockito.when(tagRepository.findById(TAG_ID)).thenReturn(tag);
 
         ResponseEntity<?> retrievedTag = tagService.getTag(TAG_ID);
         ResponseEntity<?> expected = ResponseEntity.status(FOUND).body(tag);
 
         Mockito.verify(tagRepository).existsById(Mockito.eq(TAG_ID));
-        Mockito.verify(tagRepository).getReferenceById(Mockito.eq(TAG_ID));
+        Mockito.verify(tagRepository).findById(Mockito.eq(TAG_ID));
 
         assertEquals(expected,retrievedTag);
     }

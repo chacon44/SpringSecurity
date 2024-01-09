@@ -111,11 +111,11 @@ public class CertificateServiceTest {
     public void getGiftCertificate_certificateExist() {
 
         Mockito.when(certificatesRepository.existsById(giftCertificate.getId())).thenReturn(true);
-        Mockito.when(certificatesRepository.getReferenceById(giftCertificate.getId())).thenReturn(giftCertificate);
+        Mockito.when(certificatesRepository.findById(giftCertificate.getId())).thenReturn(giftCertificate);
         ResponseEntity<?> actual = giftCertificateService.getGiftCertificateById(giftCertificate.getId());
 
         Mockito.verify(certificatesRepository).existsById(Mockito.eq(giftCertificate.getId()));
-        Mockito.verify(certificatesRepository).getReferenceById(Mockito.eq(giftCertificate.getId()));
+        Mockito.verify(certificatesRepository).findById(Mockito.eq(giftCertificate.getId()));
 
         assertEquals(HttpStatus.FOUND, actual.getStatusCode());
         assertEquals(giftCertificate, actual.getBody());
@@ -140,7 +140,7 @@ public class CertificateServiceTest {
     public void getFilteredCertificates_correct() {
         // Arrange
 
-        Mockito.when(certificatesRepository.findByTagName(anyString())).thenReturn(listOfCertificates);
+        Mockito.when(certificatesRepository.findCertificateByTagName(anyString())).thenReturn(listOfCertificates);
         Mockito.when(certificatesRepository.findByNameContainsOrDescriptionContains(anyString(),anyString())).thenReturn(listOfCertificates);
 
         // Act

@@ -86,7 +86,7 @@ public class GiftCertificateService {
     public ResponseEntity<?> getGiftCertificateById(@NonNull Long giftCertificateId) {
 
         if (certificatesRepository.existsById(giftCertificateId)) {
-            GiftCertificate giftCertificate = certificatesRepository.getReferenceById(giftCertificateId);
+            Optional<GiftCertificate> giftCertificate = certificatesRepository.findById(giftCertificateId);
             return ResponseEntity.status(HttpStatus.FOUND).body(giftCertificate);
         } else {
             String message = CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId);
@@ -100,8 +100,11 @@ public class GiftCertificateService {
       return certificatesRepository.findByNameContainsOrDescriptionContains(keyword, keyword);
     }
 
-    public List<GiftCertificate> getCertificatesByTagName(String tagName) {
-        return certificatesRepository.findByTagName(tagName);
+    public List<GiftCertificate> getCertificatesByTagId(String tagName) {
+
+        Tag tag = tagRepository.findByName(tagName).get();
+        Long tagId = tag.getId();
+        return certificatesRepository.findCertificateByTagId(tagId);
     }
     public ResponseEntity<?> getFilteredCertificates(String tagName, String searchWord, String nameOrder, String createDateOrder) {
 
@@ -119,7 +122,7 @@ public class GiftCertificateService {
 
 
     public List<GiftCertificate> filterCertificates(String tagName, String searchWord, String nameOrder, String createDateOrder) {
-        List<GiftCertificate> certificatesByTagName = getCertificatesByTagName(tagName);
+        List<GiftCertificate> certificatesByTagName = getCertificatesByTagId(tagName);
 
       return certificatesByTagName.stream()
             .filter(certificate ->
@@ -199,7 +202,7 @@ public class GiftCertificateService {
 
         // Copy properties from the passed giftCertificate to the existing one
         GiftCertificate existingCertificate = existingCertificateOptional.get();
-        BeanUtils.copyProperties(giftCertificate, existingCertificate, "id", "tags");
+        BeanUtils.copyProperties(giftCertificate, existingCertificate, "id", "createDate");
         existingCertificate.setTags(giftCertificate.getTags());
 
         GiftCertificate savedCertificate = certificatesRepository.save(existingCertificate);

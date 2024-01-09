@@ -53,9 +53,8 @@ public class TagService {
      * if not, returns not found
      */
     public ResponseEntity<?> getTag(long tagId) {
-
         if (tagRepository.existsById(tagId)) {
-            Tag tag = tagRepository.getReferenceById(tagId);
+            Optional<Tag> tag = tagRepository.findById(tagId);
             return ResponseEntity.status(FOUND).body(tag);
         } else {
             String message = TAG_ID_NOT_FOUND.formatted(tagId);

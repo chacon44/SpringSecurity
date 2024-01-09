@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @SpringBootApplication
-//@Profile({"!h2"})
 public class Main {
 
   public static void main(String[] args) {
