@@ -2,12 +2,16 @@ package com.epam.esm.service;
 
 import static com.epam.esm.exceptions.Codes.TAG_BAD_REQUEST;
 import static com.epam.esm.exceptions.Codes.TAG_NOT_FOUND;
-import static com.epam.esm.exceptions.Messages.*;
-import static org.springframework.http.HttpStatus.*;
+import static com.epam.esm.exceptions.Messages.TAG_ALREADY_EXISTS;
+import static com.epam.esm.exceptions.Messages.TAG_ID_NOT_FOUND;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.FOUND;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import com.epam.esm.Dto.Errors.ErrorDTO;
 import com.epam.esm.model.Tag;
-import com.epam.esm.repository.GiftCertificateTagRepository;
+import com.epam.esm.repository.TagRepository;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,43 +21,29 @@ import org.springframework.stereotype.Service;
 @Service
 public class TagService {
 
-    private final GiftCertificateTagRepository giftCertificateTagRepository;
-
+    private final TagRepository tagRepository;
 
     @Autowired
-    public TagService(GiftCertificateTagRepository giftCertificateTagRepository) {
-        this.giftCertificateTagRepository = giftCertificateTagRepository;
+    public TagService(TagRepository tagRepository) {
+        this.tagRepository = tagRepository;
     }
 
-    /**
-     *
-     * @param tagName name of the tag to be saved.
-     * @return
-     * if tag name is not valid, returns bad request
-     * if tag already exists, returns bad request
-     * if tag does not exist, but cannot be saved, return bad request
-     * if it is saved, return CREATED and tag saved
-     */
+
     public ResponseEntity<?> saveTag(String tagName) {
         if (tagName == null || tagName.isEmpty()) {
             return ResponseEntity.badRequest().body(new ErrorDTO("Tag name is required", TAG_BAD_REQUEST));
         }
-        Tag tag = giftCertificateTagRepository.getTagByName(tagName);
 
-        if (tag != null) {
-
-            String message = TAG_ALREADY_EXISTS.formatted(tag.getId());
+        Optional<Tag> possibleTag = tagRepository.findByName(tagName);
+        if (possibleTag.isPresent()) {
+            String message = TAG_ALREADY_EXISTS.formatted(possibleTag.get().getId());
             return ResponseEntity.badRequest().body(new ErrorDTO(message, TAG_BAD_REQUEST));
         }
 
-        Tag tagSaved = giftCertificateTagRepository.saveTag(tagName);
-        if (tagSaved == null) {
-            return ResponseEntity.status(BAD_REQUEST).body(new ErrorDTO(TAG_COULD_NOT_BE_SAVED, TAG_BAD_REQUEST));
-        }
-
-        Tag tagResponse = giftCertificateTagRepository.getTagById(tagSaved.getId());
-
-        return ResponseEntity.status(CREATED).body(tagResponse);
+        Tag tag = new Tag();
+        tag.setName(tagName);
+        Tag savedTag = tagRepository.save(tag);
+        return ResponseEntity.status(CREATED).body(savedTag);
     }
 
     /**
@@ -63,9 +53,9 @@ public class TagService {
      * if not, returns not found
      */
     public ResponseEntity<?> getTag(long tagId) {
-        Tag tag = giftCertificateTagRepository.getTagById(tagId);
 
-        if (tag != null) {
+        if (tagRepository.existsById(tagId)) {
+            Tag tag = tagRepository.getReferenceById(tagId);
             return ResponseEntity.status(FOUND).body(tag);
         } else {
             String message = TAG_ID_NOT_FOUND.formatted(tagId);
@@ -79,13 +69,13 @@ public class TagService {
      *
      * @param tagId unique tag id
      * @return
-     * if tag has been deleted, returns found
+     * if the tag has been deleted, returns found
      * if not, returns not found
      */
     public ResponseEntity<?> deleteTag(long tagId) {
 
-        boolean tagSuccessfullyDeleted = giftCertificateTagRepository.deleteTag(tagId);
-        if (tagSuccessfullyDeleted) {
+        if (tagRepository.existsById(tagId)) {
+            tagRepository.deleteById(tagId);
             return ResponseEntity.status(FOUND).body(null);
         }
 

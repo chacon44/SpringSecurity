@@ -1,10 +1,20 @@
 package controller;
 
+import static org.hamcrest.core.Is.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doReturn;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
-import com.epam.esm.Main;
 import com.epam.esm.controller.CertificatesController;
 import com.epam.esm.model.GiftCertificate;
-import com.epam.esm.model.Tag;
 import com.epam.esm.service.GiftCertificateService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,20 +23,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.List;
-
-import static org.hamcrest.core.Is.is;
-import static org.mockito.Mockito.doReturn;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CertificatesControllerTest {
@@ -61,17 +62,12 @@ public class CertificatesControllerTest {
     @Test
     public void postCertificate() throws Exception {
 
-        GiftCertificate giftCertificateToSave = new GiftCertificate(
-                giftCertificateRequestDTO.name(),
-                giftCertificateRequestDTO.description(),
-                giftCertificateRequestDTO.price(),
-                giftCertificateRequestDTO.duration()
-        );
 
-        List<Long> tagIds = giftCertificateRequestDTO.tagIds();
         ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.CREATED).body(giftCertificate);
-        doReturn(responseEntity).when(giftCertificateService).saveGiftCertificate(giftCertificateToSave, tagIds);
-
+        doReturn(responseEntity).when(giftCertificateService).saveGiftCertificate(
+            any(GiftCertificate.class),
+            anyList()
+        );
         // Act
         mockMvc.perform(post("/certificate")
                         .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
@@ -116,30 +112,15 @@ public class CertificatesControllerTest {
 
     @Test
     public void getCertificate_filter() throws Exception {
-        // Arrange
-        List<Long> tagIds = List.of(1L, 2L);
-        Long id = 1L;
-        Tag tag1 = new Tag(1L, "tag1");
-        Tag tag2 = new Tag(2L, "tag2");
+
 
         String tagName = "tag1";
         String searchWord = "name";
         String nameOrder = "ASC";
         String createDateOrder = "ASC";
 
-        List<Tag> tags = List.of(tag1, tag2);
-        GiftCertificateRequestDTO giftCertificateRequestDTO = new GiftCertificateRequestDTO(
-                "name", "description", 10.50, 20L, tagIds);
 
-//        GiftCertificate giftCertificateToGet = new GiftCertificate(
-//                1L,
-//                giftCertificateRequestDTO.name(),
-//                giftCertificateRequestDTO.description(),
-//                giftCertificateRequestDTO.price(),
-//                giftCertificateRequestDTO.duration(),
-//                "createDate",
-//                "last update date",
-//                tags);
+
 
         ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.OK).body(giftCertificate);
         doReturn(responseEntity).when(giftCertificateService).getFilteredCertificates(tagName,searchWord,nameOrder,createDateOrder);
@@ -185,15 +166,13 @@ public class CertificatesControllerTest {
     @Test
     public void putCertificate() throws Exception {
         Long id = 1L;
-        List<Long> tagIds = giftCertificateRequestDTO.tagIds();
-        GiftCertificate giftCertificateToUpdate = new GiftCertificate(
-                giftCertificateRequestDTO.name(),
-                giftCertificateRequestDTO.description(),
-                giftCertificateRequestDTO.price(),
-                giftCertificateRequestDTO.duration());
-        ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.OK).body(giftCertificate);
-        doReturn(responseEntity).when(giftCertificateService).updateGiftCertificate(id, giftCertificateToUpdate, tagIds);
 
+        ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.OK).body(giftCertificate);
+        doReturn(responseEntity).when(giftCertificateService).updateGiftCertificate(
+            any(Long.class),
+            any(GiftCertificate.class),
+            anyList()
+        );
         mockMvc.perform(put("/certificate/{id}", id)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)

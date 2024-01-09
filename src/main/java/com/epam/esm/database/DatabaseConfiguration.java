@@ -10,8 +10,10 @@ import org.springframework.context.annotation.Configuration;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.logging.Logger;
+import org.springframework.context.annotation.Profile;
 
 @Configuration
+@Profile({"!h2"})
 public class DatabaseConfiguration {
   private static final Logger LOGGER = Logger.getLogger(DatabaseConfiguration.class.getName());
 
