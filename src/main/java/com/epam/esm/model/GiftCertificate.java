@@ -64,7 +64,7 @@ public class GiftCertificate {
         this.lastUpdateDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
             .format(LocalDateTime.now(ZoneOffset.UTC));
     }
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany(cascade = {CascadeType.ALL})
     @JoinTable(name = "gift_certificate_tag",
         joinColumns = @JoinColumn(name = "certificate_id"),
         inverseJoinColumns = @JoinColumn(name = "tag_id"))
