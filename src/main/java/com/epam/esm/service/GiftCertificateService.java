@@ -11,6 +11,7 @@ import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
 import com.epam.esm.repository.CertificatesRepository;
 import com.epam.esm.repository.TagRepository;
+import com.epam.esm.utils.CertificateSpecification;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -136,7 +137,7 @@ public class GiftCertificateService {
             }
 
             // Retrieve tags with given IDs from the database
-            List<Tag> uniqueTags = tagRepository.findAllByIdIn(newTagIdsList);
+            List<Tag> uniqueTags = tagRepository.findAllTagByTagIdList(newTagIdsList);
 
             newGiftCertificate.setTags(uniqueTags);
 
@@ -158,7 +159,7 @@ public class GiftCertificateService {
         return certificateWithName.isPresent() && !certificateWithName.get().getId().equals(id);
     }
 
-    public Optional<ResponseEntity<ErrorDTO>> validateCertificateRequest(GiftCertificate giftCertificate, List<Long> tagIds) {
+    private Optional<ResponseEntity<ErrorDTO>> validateCertificateRequest(GiftCertificate giftCertificate, List<Long> tagIds) {
 
         Optional<String> validationMessage = validateRequest(giftCertificate);
         if (validationMessage.isPresent()) {
@@ -176,7 +177,7 @@ public class GiftCertificateService {
         return Optional.empty();
     }
 
-    public Optional<String> validateRequest(GiftCertificate giftCertificate) {
+    private Optional<String> validateRequest(GiftCertificate giftCertificate) {
 
         List<String> errors = new ArrayList<>();
 

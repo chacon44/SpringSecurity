@@ -1,4 +1,4 @@
-package com.epam.esm.service;
+package com.epam.esm.utils;
 import com.epam.esm.model.GiftCertificate;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;

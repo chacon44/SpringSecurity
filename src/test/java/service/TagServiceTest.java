@@ -42,7 +42,7 @@ public class TagServiceTest {
     public void saveTag_savedCorrectly_returnCreated() {
 
         Mockito.when(tagRepository.save(any(Tag.class))).thenReturn(tag);
-        Mockito.when(tagRepository.findByName(TAG_NAME)).thenReturn(Optional.empty());
+        Mockito.when(tagRepository.findTagByName(TAG_NAME)).thenReturn(Optional.empty());
 
         ResponseEntity<?> actual = tagService.saveTag(TAG_NAME);
         Mockito.verify(tagRepository).save(any(Tag.class));
@@ -54,13 +54,13 @@ public class TagServiceTest {
     @Test
     public void saveTag_tagAlreadyExists_returnBadRequest() {
 
-        Mockito.when(tagRepository.findByName(TAG_NAME)).thenReturn(Optional.ofNullable(tag));
+        Mockito.when(tagRepository.findTagByName(TAG_NAME)).thenReturn(Optional.ofNullable(tag));
 
         ResponseEntity<?> actual = tagService.saveTag(TAG_NAME);
         String message = TAG_ALREADY_EXISTS.formatted(tag.getId());
 
         ResponseEntity<ErrorDTO> responseEntity = ResponseEntity.badRequest().body(new ErrorDTO(message, TAG_BAD_REQUEST));
-        Mockito.verify(tagRepository).findByName(Mockito.eq(TAG_NAME));
+        Mockito.verify(tagRepository).findTagByName(Mockito.eq(TAG_NAME));
 
         assertEquals(responseEntity.getBody(),actual.getBody());
         assertEquals(responseEntity.getStatusCode(), actual.getStatusCode());

@@ -34,7 +34,7 @@ public class TagService {
             return ResponseEntity.badRequest().body(new ErrorDTO("Tag name is required", TAG_BAD_REQUEST));
         }
 
-        Optional<Tag> possibleTag = tagRepository.findByName(tagName);
+        Optional<Tag> possibleTag = tagRepository.findTagByName(tagName);
         if (possibleTag.isPresent()) {
             String message = TAG_ALREADY_EXISTS.formatted(possibleTag.get().getId());
             return ResponseEntity.badRequest().body(new ErrorDTO(message, TAG_BAD_REQUEST));
