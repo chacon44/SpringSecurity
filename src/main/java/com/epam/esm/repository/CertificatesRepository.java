@@ -16,13 +16,6 @@ public interface CertificatesRepository extends JpaRepository<GiftCertificate, L
 
   Optional<GiftCertificate> findCertificateByName(String certificateName);
 
-  String GET_CERTIFICATES_BY_TAG_ID = "SELECT certificate_id FROM gift_certificate_tag WHERE tag_id = :tagName";
-
-  @Query(value = GET_CERTIFICATES_BY_TAG_ID, nativeQuery = true)  // add `nativeQuery = true` if this is a native SQL query
-  List<GiftCertificate> findCertificateByTagId(@Param("tagName") Long tagId);
-
-  Optional<GiftCertificate> findByNameAndDescriptionAndPriceAndDuration(String name, String description, Double price, Long duration);
-
   String GET_TAGS_BY_CERTIFICATE_ID = "SELECT t.* FROM tag t INNER JOIN " +
       "gift_certificate_tag gct ON t.tag_id = gct.tag_id " +
       "WHERE gct.certificate_id = :giftCertificateId";

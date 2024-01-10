@@ -6,6 +6,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.NonNull;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
@@ -19,9 +20,10 @@ public class CertificateSpecification implements Specification<GiftCertificate> 
   }
 
   @Override
-  public Predicate toPredicate(Root<GiftCertificate> root,
-      CriteriaQuery<?> query,
-      CriteriaBuilder criteriaBuilder) {
+  public Predicate toPredicate(
+      @NonNull Root<GiftCertificate> root,
+      @NonNull CriteriaQuery<?> query,
+      @NonNull CriteriaBuilder criteriaBuilder) {
 
     List<Predicate> predicates = new ArrayList<>();
 

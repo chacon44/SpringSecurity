@@ -18,10 +18,10 @@ public class TagsController {
      * @param requestDTO The data transfer object containing the details of the tag to be created.
      * @return ResponseEntity<?> A response entity representing the result of the creation operation.
      *      It could contain the created tag, a custom message, or nothing (in case of void).
-     *      if tag name is not valid, returns bad request
+     *      If tag name is not valid, returns bad request
      *      if tag already exists, returns bad request
      *      if tag does not exist, but cannot be saved, return bad request
-     *      if it is saved, return CREATED and tag saved
+     *      if it is saved, return CREATED, and tag saved
      * @PostMapping This annotation maps HTTP POST requests onto this method.
      * @value "/tag" The path where this method is mapped.
      * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
@@ -37,7 +37,7 @@ public class TagsController {
      *
      * @param id The unique identifier of the tag to be retrieved.
      * @return ResponseEntity<?> A response entity containing the tag with the given ID.
-     * can return the requested tag, or not found
+     * can return the requested tag or not found
      * @GetMapping This annotation maps HTTP GET requests onto this method.
      * @value "/tag/{id}" The path where this method is mapped. It includes a path variable 'id'.
      * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.

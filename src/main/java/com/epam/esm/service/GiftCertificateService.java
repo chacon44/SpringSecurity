@@ -39,21 +39,6 @@ public class GiftCertificateService {
         this.tagRepository = tagRepository;
     }
 
-    /**
-     * The saveGiftCertificate method is used to save a new gift certificate in the database.
-     * This method also validates the request and ensures that each gift certificate is unique.
-     *
-     * @param giftCertificate The gift certificate object to be saved. It should contain all the required fields.
-     * @param tagIdsList      The list of tag IDs associated with the gift certificate.
-     * @return If the gift certificate is saved successfully, it returns the saved certificate
-     * with a HttpStatus of CREATED (201).
-     * <p>
-     * If the gift certificate could not be saved, it returns
-     * an ErrorDTO object with a message and a HttpStatus of BAD_REQUEST (400).
-     * <p>
-     * If a gift certificate with the same name already exists in the database,
-     * it returns an ErrorDTO object with a message and a HttpStatus of FOUND (302).
-     */
     public ResponseEntity<?> saveGiftCertificate(@NonNull GiftCertificate giftCertificate, List<Long> tagIdsList) {
 
         Optional<ResponseEntity<ErrorDTO>> requestValidationMessage = validateCertificateRequest(giftCertificate, tagIdsList);
@@ -78,11 +63,6 @@ public class GiftCertificateService {
         }
     }
 
-    /**
-     * @param giftCertificateId id of the certificate
-     * @return if the certificate exists, returns found with giftCertificate
-     * if not, returns not found and error
-     */
     public ResponseEntity<?> getGiftCertificateById(@NonNull Long giftCertificateId) {
 
         if (certificatesRepository.existsById(giftCertificateId)) {
@@ -124,11 +104,6 @@ public class GiftCertificateService {
         return sortBy;
     }
 
-    /**
-     * @param giftCertificateId id of certificate to be deleted
-     * @return if deleted, returns FOUND
-     * if not deleted, returns NO CONTENT, with a body that contains message and code
-     */
     public ResponseEntity<?> deleteGiftCertificate(Long giftCertificateId) {
 
         if(certificatesRepository.existsById(giftCertificateId)){
@@ -205,11 +180,11 @@ public class GiftCertificateService {
 
         List<String> errors = new ArrayList<>();
 
-        if (giftCertificate.getName().isEmpty()) {
+        if(giftCertificate.getName() == null || giftCertificate.getName().isEmpty()) {
             errors.add("Name is required");
         }
 
-        if (giftCertificate.getDescription().isEmpty()) {
+        if (giftCertificate.getDescription() == null || giftCertificate.getDescription().isEmpty()) {
             errors.add("Description is required");
         }
 
