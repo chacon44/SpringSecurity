@@ -1,15 +1,21 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
+import static com.epam.esm.exceptions.Codes.CERTIFICATE_NOT_FOUND;
+
+import com.epam.esm.Dto.Errors.ErrorDTO;
+import com.epam.esm.Dto.GiftCertificateRequestDTO;
+import com.epam.esm.exceptions.CertificateNotFoundException;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.service.GiftCertificateService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -116,35 +122,34 @@ public class CertificatesController {
         return giftCertificateService.deleteGiftCertificate(id);
     }
 
-    /**
-     * Updates a gift certificate identified by its ID.
-     *
-     * @param id The unique identifier of the gift certificate to be updated.
-     * @return ResponseEntity<?> A response entity representing the result of the update operation
-     * Possibilities:
-     *      Updated correctly: ResponseEntity.status(HttpStatus.OK).body(responseDTO)
-     *      Parameters not valid: requestValidationMessage.get() when parameters not valid
-     *      Already existing identical certificate: ResponseEntity.status(HttpStatus.FOUND).body(errorResponse)
-     *      ID not associated to any certificate: ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse)
-     *      Some of the tags doesn't exist: ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
-     * <p>
-     * DeleteMapping This annotation maps HTTP PUT requests onto this method.
-     * Value "/certificate/{id}" The path where this method is mapped.
-     * It includes a path variable 'id'.
-     * Consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
-     * Produces {"application/json"} Specifies that this method returns data in application/json format.
-     */
-    @PutMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
-    ResponseEntity<?> updateCertificate(@PathVariable long id, @RequestBody GiftCertificateRequestDTO requestDTO) {
 
-        return giftCertificateService.updateGiftCertificate(id, new GiftCertificate(
+//    @PutMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
+//    ResponseEntity<?> updateCertificate(@PathVariable long id, @RequestBody GiftCertificateRequestDTO requestDTO) {
+//
+//        return giftCertificateService.updateGiftCertificate(id, new GiftCertificate(
+//                requestDTO.name(),
+//                requestDTO.description(),
+//                requestDTO.price(),
+//                requestDTO.duration()
+//        ), requestDTO.tagIds());
+//    }
+
+    @ExceptionHandler(CertificateNotFoundException.class)
+    public ResponseEntity<ErrorDTO> handleCertificateNotFoundException(
+        CertificateNotFoundException e) {
+        ErrorDTO errorResponse = new ErrorDTO(e.getMessage(), CERTIFICATE_NOT_FOUND);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @PatchMapping("/certificate/{id}")
+    public ResponseEntity<GiftCertificate> updateCertificate(@PathVariable Long id, @RequestBody GiftCertificateRequestDTO requestDTO){
+        GiftCertificate updatedCertificate = giftCertificateService.updateGiftCertificate(id, new GiftCertificate(
                 requestDTO.name(),
                 requestDTO.description(),
                 requestDTO.price(),
-                requestDTO.duration()
-        ), requestDTO.tagIds());
+                requestDTO.duration()), requestDTO.tagIds());
+        return ResponseEntity.ok(updatedCertificate);
     }
-
     /* Format of POST
             "name" : "name",
             "description" : "description",

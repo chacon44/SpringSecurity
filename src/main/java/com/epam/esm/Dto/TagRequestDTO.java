@@ -1,4 +1,4 @@
-package com.epam.esm.Dto.Tag;
+package com.epam.esm.Dto;
 
 public record TagRequestDTO(String name){
 }

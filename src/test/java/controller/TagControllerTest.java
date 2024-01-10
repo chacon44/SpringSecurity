@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.epam.esm.Dto.Tag.TagRequestDTO;
+import com.epam.esm.Dto.TagRequestDTO;
 import com.epam.esm.controller.TagsController;
 import com.epam.esm.model.Tag;
 import com.epam.esm.service.TagService;

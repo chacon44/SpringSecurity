@@ -10,5 +10,5 @@ import org.springframework.stereotype.Repository;
 public interface CertificatesRepository extends JpaRepository<GiftCertificate, Long> ,
     JpaSpecificationExecutor<GiftCertificate> {
 
-  Optional<GiftCertificate> findCertificateByName(String certificateName);
+  Optional<GiftCertificate> findByName(String certificateName);
 }

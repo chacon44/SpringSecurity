@@ -1,6 +1,6 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.Dto.Tag.TagRequestDTO;
+import com.epam.esm.Dto.TagRequestDTO;
 import com.epam.esm.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

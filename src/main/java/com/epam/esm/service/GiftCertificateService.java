@@ -7,11 +7,13 @@ import static com.epam.esm.exceptions.Messages.CERTIFICATE_ALREADY_EXISTS;
 import static com.epam.esm.exceptions.Messages.CERTIFICATE_WITH_ID_NOT_FOUND;
 
 import com.epam.esm.Dto.Errors.ErrorDTO;
+import com.epam.esm.exceptions.CertificateNotFoundException;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
 import com.epam.esm.repository.CertificatesRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.utils.CertificateSpecification;
+import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,7 +48,7 @@ public class GiftCertificateService {
         if (requestValidationMessage.isPresent()) return requestValidationMessage.get();
 
         tagIdsList = tagIdsList.stream().distinct().collect(Collectors.toList());
-        Optional<GiftCertificate> tryToFindCertificate = certificatesRepository.findCertificateByName(giftCertificate.getName());
+        Optional<GiftCertificate> tryToFindCertificate = certificatesRepository.findByName(giftCertificate.getName());
 
         List<Tag> tags = tagRepository.findAllById(tagIdsList);
         List<Tag> uniqueTags = new ArrayList<>(new HashSet<>(tags));
@@ -118,44 +120,69 @@ public class GiftCertificateService {
                 CERTIFICATE_NOT_FOUND));
     }
 
-    public ResponseEntity<?> updateGiftCertificate(@NonNull Long id, GiftCertificate newGiftCertificate, List<Long> newTagIdsList ) {
+//    public ResponseEntity<?> updateGiftCertificate(@NonNull Long id, GiftCertificate newGiftCertificate, List<Long> newTagIdsList ) {
+//
+//        // Check if there's an issue with the request and return an error if any
+//        Optional<ResponseEntity<ErrorDTO>> requestValidationMessage = validateCertificateRequest(newGiftCertificate, newTagIdsList);
+//        if (requestValidationMessage.isPresent()) {
+//            return requestValidationMessage.get();
+//        }
+//
+//        return certificatesRepository.findById(id).map(existingCertificate -> {
+//            if (isNewCertificateNameTaken(newGiftCertificate.getName(), id)) {
+//                Optional<GiftCertificate> optionalCertificate = certificatesRepository.findByName(newGiftCertificate.getName());
+//                if (optionalCertificate.isPresent()) {
+//                    Long foundId = optionalCertificate.get().getId();
+//                    return ResponseEntity.status(HttpStatus.FOUND)
+//                        .body(new ErrorDTO(CERTIFICATE_ALREADY_EXISTS.formatted(foundId), CERTIFICATE_FOUND));
+//                }
+//            }
+//
+//            // Retrieve tags with given IDs from the database
+//            List<Tag> uniqueTags = tagRepository.findAllByIdIn(newTagIdsList);
+//
+//            newGiftCertificate.setTags(uniqueTags);
+//
+//            // Copy fields from updated certificate to the existing one
+//            BeanUtils.copyProperties(newGiftCertificate, existingCertificate, "id", "createDate");
+//            existingCertificate.setTags(newGiftCertificate.getTags());
+//
+//            GiftCertificate savedCertificate = certificatesRepository.save(existingCertificate);
+//
+//            return ResponseEntity.status(HttpStatus.OK).body(savedCertificate);
+//        }).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+//            .body(new ErrorDTO(
+//                CERTIFICATE_WITH_ID_NOT_FOUND.formatted(id),
+//                CERTIFICATE_NOT_FOUND)));
+//    }
 
-        // Check if there's an issue with the request and return an error if any
-        Optional<ResponseEntity<ErrorDTO>> requestValidationMessage = validateCertificateRequest(newGiftCertificate, newTagIdsList);
-        if (requestValidationMessage.isPresent()) {
-            return requestValidationMessage.get();
+    @Transactional
+    public GiftCertificate updateGiftCertificate(@NonNull Long certificateId, GiftCertificate updates, List<Long> newTagIdsList) {
+        GiftCertificate existingCertificate = certificatesRepository.findById(certificateId)
+            .orElseThrow(() -> new CertificateNotFoundException(certificateId));
+
+        if (updates.getName() != null) {
+            existingCertificate.setName(updates.getName());
+        }
+        if (updates.getDescription() != null) {
+            existingCertificate.setDescription(updates.getDescription());
+        }
+        if (updates.getPrice() != null) {
+            existingCertificate.setPrice(updates.getPrice());
+        }
+        if (updates.getDuration() != null) {
+            existingCertificate.setDuration(updates.getDuration());
+        }
+        if (newTagIdsList != null) {
+            List<Tag> uniqueTags = tagRepository.findAllByIdIn(newTagIdsList);
+            existingCertificate.getTags().clear(); // remove old tags
+            existingCertificate.getTags().addAll(uniqueTags); // add new tags
         }
 
-        return certificatesRepository.findById(id).map(existingCertificate -> {
-            if (isNewCertificateNameTaken(newGiftCertificate.getName(), id)) {
-                Optional<GiftCertificate> optionalCertificate = certificatesRepository.findCertificateByName(newGiftCertificate.getName());
-                if (optionalCertificate.isPresent()) {
-                    Long foundId = optionalCertificate.get().getId();
-                    return ResponseEntity.status(HttpStatus.FOUND)
-                        .body(new ErrorDTO(CERTIFICATE_ALREADY_EXISTS.formatted(foundId), CERTIFICATE_FOUND));
-                }
-            }
-
-            // Retrieve tags with given IDs from the database
-            List<Tag> uniqueTags = tagRepository.findAllTagByTagIdList(newTagIdsList);
-
-            newGiftCertificate.setTags(uniqueTags);
-
-            // Copy fields from updated certificate to the existing one
-            BeanUtils.copyProperties(newGiftCertificate, existingCertificate, "id", "createDate");
-            existingCertificate.setTags(newGiftCertificate.getTags());
-
-            GiftCertificate savedCertificate = certificatesRepository.save(existingCertificate);
-
-            return ResponseEntity.status(HttpStatus.OK).body(savedCertificate);
-        }).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(new ErrorDTO(
-                CERTIFICATE_WITH_ID_NOT_FOUND.formatted(id),
-                CERTIFICATE_NOT_FOUND)));
+        return certificatesRepository.save(existingCertificate);
     }
-
     private boolean isNewCertificateNameTaken(String name, Long id) {
-        Optional<GiftCertificate> certificateWithName = certificatesRepository.findCertificateByName(name);
+        Optional<GiftCertificate> certificateWithName = certificatesRepository.findByName(name);
         return certificateWithName.isPresent() && !certificateWithName.get().getId().equals(id);
     }
 
