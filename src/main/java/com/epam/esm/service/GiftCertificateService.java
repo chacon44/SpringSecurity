@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.ResourceAccessException;
 
 @Slf4j
 @Service
@@ -225,12 +224,6 @@ public class GiftCertificateService {
             return Optional.of(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse));
         }
         return Optional.empty();
-    }
-
-    public List<Long> findTagIdsByCertificateId(Long certificateId) {
-        return certificatesRepository.findById(certificateId)
-            .map(GiftCertificate::getTagIds)
-            .orElseThrow(() -> new ResourceAccessException("GiftCertificate with id " + certificateId + " not found"));
     }
 
     public boolean checkIfGiftCertificateExists(GiftCertificate giftCertificate, List<Long> newTagIds) {

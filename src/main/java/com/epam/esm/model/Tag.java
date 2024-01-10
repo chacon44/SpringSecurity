@@ -25,6 +25,6 @@ public class Tag{
     @Column(name = "tag_id")
     public Long id;
 
-    @Column(name = "tag_name") // replace with actual column name
+    @Column(name = "tag_name")
     public String name;
 }

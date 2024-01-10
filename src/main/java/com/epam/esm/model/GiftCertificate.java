@@ -78,11 +78,4 @@ public class GiftCertificate {
         this.price = price;
         this.duration = duration;
     }
-
-    @JsonIgnore
-    public List<Long> getTagIds() {
-        return this.tags.stream()
-            .map(Tag::getId)
-            .collect(Collectors.toList());
-    }
 }
