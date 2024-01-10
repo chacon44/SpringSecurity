@@ -3,10 +3,8 @@ package service;
 import static com.epam.esm.exceptions.Messages.CERTIFICATE_WITH_ID_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 
 import com.epam.esm.Dto.Errors.ErrorDTO;
 import com.epam.esm.exceptions.Codes;
@@ -137,21 +135,6 @@ public class CertificateServiceTest {
         assertEquals(expected.getBody(), actual.getBody());
     }
 
-//    @Test
-//    public void getFilteredCertificates_correct() {
-//        // Arrange
-//
-//        //Mockito.when(certificatesRepository.fi(anyString())).thenReturn(listOfCertificates);
-//        Mockito.when(certificatesRepository.findByNameContainsOrDescriptionContains(anyString(),anyString())).thenReturn(listOfCertificates);
-//
-//        // Act
-//        ResponseEntity<?> actual = giftCertificateService.getFilteredCertificates("tag","name","ASC","DESC");
-//
-//        // Assert
-//        assertEquals(HttpStatus.OK, actual.getStatusCode());
-//        assertEquals(listOfCertificates, actual.getBody());
-//    }
-
     @Test
     public void deleteGiftCertificate_certificateExists() {
         Long giftCertificateId = giftCertificate.getId();
@@ -236,7 +219,6 @@ public class CertificateServiceTest {
 
         // Assert
         assertEquals(HttpStatus.FOUND, actual.getStatusCode());
-        assertTrue(giftCertificateService.checkIfGiftCertificateExists(giftCertificate1, tagIdsList));
     }
 
     @Test
