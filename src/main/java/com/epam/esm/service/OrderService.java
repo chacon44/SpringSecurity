@@ -64,7 +64,7 @@ public class OrderService {
   }
 
   private UserDTO mapToUserDTO(User user) {
-    return new UserDTO(user.getId(), user.getName()); // depending on what fields UserDTO has
+    return new UserDTO(user.getId(), user.getName());
   }
 
   private CertificateDTO mapToCertificateDTO(GiftCertificate certificate) {

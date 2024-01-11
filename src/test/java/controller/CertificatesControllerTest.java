@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.epam.esm.Dto.GiftCertificateRequestDTO;
 import com.epam.esm.controller.CertificatesController;
 import com.epam.esm.model.GiftCertificate;
-import com.epam.esm.service.GiftCertificateService;
+import com.epam.esm.service.CertificateService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ public class CertificatesControllerTest {
     private CertificatesController certificatesController;
 
     @Mock
-    private GiftCertificateService giftCertificateService;
+    private CertificateService certificateService;
 
     @Mock
     GiftCertificate giftCertificate;
@@ -64,7 +64,7 @@ public class CertificatesControllerTest {
 
 
         ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.CREATED).body(giftCertificate);
-        doReturn(responseEntity).when(giftCertificateService).saveGiftCertificate(
+        doReturn(responseEntity).when(certificateService).saveGiftCertificate(
             any(GiftCertificate.class),
             anyList()
         );
@@ -91,7 +91,7 @@ public class CertificatesControllerTest {
 
         Long id = giftCertificate.getId();
         ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.CREATED).body(giftCertificate);
-        doReturn(responseEntity).when(giftCertificateService).getGiftCertificateById(id);
+        doReturn(responseEntity).when(certificateService).getGiftCertificateById(id);
 
         // Act
         mockMvc.perform(get("/certificate/{id}", id)
@@ -123,7 +123,7 @@ public class CertificatesControllerTest {
 
 
         ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.OK).body(giftCertificate);
-        doReturn(responseEntity).when(giftCertificateService).getFilteredCertificates(tagName,searchWord,nameOrder,createDateOrder);
+        doReturn(responseEntity).when(certificateService).getFilteredCertificates(tagName,searchWord,nameOrder,createDateOrder);
 
         // Act
         mockMvc.perform(get("/certificate/")
@@ -152,7 +152,7 @@ public class CertificatesControllerTest {
         Long id = 1L;
 
         ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.FOUND).body(null);
-        doReturn(responseEntity).when(giftCertificateService).deleteGiftCertificate(id);
+        doReturn(responseEntity).when(certificateService).deleteGiftCertificate(id);
 
         // Act
         mockMvc.perform(delete("/certificate/{id}", id)

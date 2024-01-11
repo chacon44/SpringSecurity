@@ -1,17 +1,11 @@
 package com.epam.esm.controller;
 
-import static com.epam.esm.exceptions.Codes.CERTIFICATE_NOT_FOUND;
-
-import com.epam.esm.Dto.Errors.ErrorDTO;
 import com.epam.esm.Dto.GiftCertificateRequestDTO;
-import com.epam.esm.exceptions.CertificateNotFoundException;
 import com.epam.esm.model.GiftCertificate;
-import com.epam.esm.service.GiftCertificateService;
+import com.epam.esm.service.CertificateService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CertificatesController {
 
     @Autowired
-    private GiftCertificateService giftCertificateService;
+    private CertificateService certificateService;
 
     /**
      * Creates a new gift certificate.
@@ -56,7 +50,7 @@ public class CertificatesController {
                 requestDTO.price(),
                 requestDTO.duration()
         );
-        return giftCertificateService.saveGiftCertificate(giftCertificate, requestDTO.tagIds());
+        return certificateService.saveGiftCertificate(giftCertificate, requestDTO.tagIds());
     }
 
     /**
@@ -73,7 +67,7 @@ public class CertificatesController {
      */
     @GetMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> getCertificate(@PathVariable long id) {
-        return giftCertificateService.getGiftCertificateById(id);
+        return certificateService.getGiftCertificateById(id);
     }
 
     /**
@@ -96,7 +90,7 @@ public class CertificatesController {
             @RequestParam(required = false) String nameOrder,
             @RequestParam(required = false) String createDateOrder) {
 
-        return giftCertificateService.getFilteredCertificates(
+        return certificateService.getFilteredCertificates(
                 tagName,
                 searchWord,
                 nameOrder,
@@ -119,31 +113,12 @@ public class CertificatesController {
      */
     @DeleteMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> deleteCertificate(@PathVariable long id) {
-        return giftCertificateService.deleteGiftCertificate(id);
-    }
-
-
-//    @PutMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
-//    ResponseEntity<?> updateCertificate(@PathVariable long id, @RequestBody GiftCertificateRequestDTO requestDTO) {
-//
-//        return giftCertificateService.updateGiftCertificate(id, new GiftCertificate(
-//                requestDTO.name(),
-//                requestDTO.description(),
-//                requestDTO.price(),
-//                requestDTO.duration()
-//        ), requestDTO.tagIds());
-//    }
-
-    @ExceptionHandler(CertificateNotFoundException.class)
-    public ResponseEntity<ErrorDTO> handleCertificateNotFoundException(
-        CertificateNotFoundException e) {
-        ErrorDTO errorResponse = new ErrorDTO(e.getMessage(), CERTIFICATE_NOT_FOUND);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        return certificateService.deleteGiftCertificate(id);
     }
 
     @PatchMapping("/certificate/{id}")
     public ResponseEntity<GiftCertificate> updateCertificate(@PathVariable Long id, @RequestBody GiftCertificateRequestDTO requestDTO){
-        GiftCertificate updatedCertificate = giftCertificateService.updateGiftCertificate(id, new GiftCertificate(
+        GiftCertificate updatedCertificate = certificateService.updateGiftCertificate(id, new GiftCertificate(
                 requestDTO.name(),
                 requestDTO.description(),
                 requestDTO.price(),

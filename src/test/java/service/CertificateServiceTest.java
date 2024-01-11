@@ -13,9 +13,9 @@ import com.epam.esm.Dto.Errors.ErrorDTO;
 import com.epam.esm.exceptions.Codes;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
-import com.epam.esm.repository.CertificatesRepository;
+import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
-import com.epam.esm.service.GiftCertificateService;
+import com.epam.esm.service.CertificateService;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -35,10 +35,10 @@ import org.springframework.http.ResponseEntity;
 public class CertificateServiceTest {
 
     @InjectMocks
-    private GiftCertificateService giftCertificateService;
+    private CertificateService certificateService;
 
     @Mock
-    CertificatesRepository certificatesRepository;
+    CertificateRepository certificateRepository;
 
     @Mock
     TagRepository tagRepository;
@@ -67,14 +67,14 @@ public class CertificateServiceTest {
         List<Long> tagIdsList = Arrays.asList(1L, 2L, 3L);
 
         when(tagRepository.findAllById(tagIdsList)).thenReturn(tagList);
-        when(certificatesRepository.findByName(giftCertificateToSave.getName()))
+        when(certificateRepository.findByName(giftCertificateToSave.getName()))
             .thenReturn(Optional.empty());
 
-        when(certificatesRepository.save(any(GiftCertificate.class))).thenReturn(giftCertificateToSave);
+        when(certificateRepository.save(any(GiftCertificate.class))).thenReturn(giftCertificateToSave);
 
-        ResponseEntity<?> actual = giftCertificateService.saveGiftCertificate(giftCertificateToSave, tagIdsList);
+        ResponseEntity<?> actual = certificateService.saveGiftCertificate(giftCertificateToSave, tagIdsList);
 
-        Mockito.verify(certificatesRepository).save(any(GiftCertificate.class));
+        Mockito.verify(certificateRepository).save(any(GiftCertificate.class));
 
         assertEquals(HttpStatus.CREATED, actual.getStatusCode());
         assertEquals(giftCertificateToSave, actual.getBody());
@@ -85,14 +85,14 @@ public class CertificateServiceTest {
         // Given
         GiftCertificate existingCertificate = new GiftCertificate(EXISTING_NAME, DESCRIPTION, PRICE, DURATION);
         when(tagRepository.findAllById(tagIdsList)).thenReturn(tagList);
-        when(certificatesRepository.findByName(existingCertificate.getName()))
+        when(certificateRepository.findByName(existingCertificate.getName()))
             .thenReturn(Optional.of(existingCertificate));
 
         // When
-        ResponseEntity<?> response = giftCertificateService.saveGiftCertificate(existingCertificate, tagIdsList);
+        ResponseEntity<?> response = certificateService.saveGiftCertificate(existingCertificate, tagIdsList);
 
         // Then
-        Optional<GiftCertificate> foundCert = certificatesRepository.findByName(existingCertificate.getName());
+        Optional<GiftCertificate> foundCert = certificateRepository.findByName(existingCertificate.getName());
         if (foundCert.isPresent()) {
             Long certificateId = foundCert.get().getId();
             ErrorDTO expectedError = new ErrorDTO(CERTIFICATE_ALREADY_EXISTS.formatted(certificateId), CERTIFICATE_FOUND);
@@ -104,13 +104,13 @@ public class CertificateServiceTest {
     @Test
     public void getGiftCertificate_certificateExist() {
 
-        when(certificatesRepository.existsById(giftCertificate.getId())).thenReturn(true);
-        when(certificatesRepository.findById(giftCertificate.getId())).thenReturn(
+        when(certificateRepository.existsById(giftCertificate.getId())).thenReturn(true);
+        when(certificateRepository.findById(giftCertificate.getId())).thenReturn(
             Optional.ofNullable(giftCertificate));
-        ResponseEntity<?> actual = giftCertificateService.getGiftCertificateById(giftCertificate.getId());
+        ResponseEntity<?> actual = certificateService.getGiftCertificateById(giftCertificate.getId());
 
-        Mockito.verify(certificatesRepository).existsById(Mockito.eq(giftCertificate.getId()));
-        Mockito.verify(certificatesRepository).findById(Mockito.eq(giftCertificate.getId()));
+        Mockito.verify(certificateRepository).existsById(Mockito.eq(giftCertificate.getId()));
+        Mockito.verify(certificateRepository).findById(Mockito.eq(giftCertificate.getId()));
 
         assertEquals(HttpStatus.FOUND, actual.getStatusCode());
         assertEquals(Optional.ofNullable(giftCertificate), actual.getBody());
@@ -123,9 +123,9 @@ public class CertificateServiceTest {
 
         ErrorDTO errorResponse = new ErrorDTO(message, Codes.CERTIFICATE_NOT_FOUND);
         ResponseEntity<ErrorDTO> expected = ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-        when(certificatesRepository.existsById(giftCertificate.getId())).thenReturn(false);
-        ResponseEntity<?> actual = giftCertificateService.getGiftCertificateById(giftCertificate.getId());
-        Mockito.verify(certificatesRepository).existsById(Mockito.eq(giftCertificate.getId()));
+        when(certificateRepository.existsById(giftCertificate.getId())).thenReturn(false);
+        ResponseEntity<?> actual = certificateService.getGiftCertificateById(giftCertificate.getId());
+        Mockito.verify(certificateRepository).existsById(Mockito.eq(giftCertificate.getId()));
 
         assertEquals(expected.getStatusCode(), actual.getStatusCode());
         assertEquals(expected.getBody(), actual.getBody());
@@ -134,10 +134,10 @@ public class CertificateServiceTest {
     @Test
     public void deleteGiftCertificate_certificateExists() {
         Long giftCertificateId = giftCertificate.getId();
-        when(certificatesRepository.existsById(giftCertificateId)).thenReturn(true);
-        ResponseEntity<?> actual = giftCertificateService.deleteGiftCertificate(giftCertificateId);
-        Mockito.verify(certificatesRepository).existsById(Mockito.eq(giftCertificateId));
-        Mockito.verify(certificatesRepository).deleteById(Mockito.eq(giftCertificateId));
+        when(certificateRepository.existsById(giftCertificateId)).thenReturn(true);
+        ResponseEntity<?> actual = certificateService.deleteGiftCertificate(giftCertificateId);
+        Mockito.verify(certificateRepository).existsById(Mockito.eq(giftCertificateId));
+        Mockito.verify(certificateRepository).deleteById(Mockito.eq(giftCertificateId));
         assertEquals(HttpStatus.FOUND, actual.getStatusCode());
     }
 
@@ -147,9 +147,9 @@ public class CertificateServiceTest {
         String message = CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId);
         ErrorDTO errorResponse = new ErrorDTO(message, Codes.CERTIFICATE_NOT_FOUND);
         ResponseEntity<ErrorDTO> expected = ResponseEntity.status(HttpStatus.NO_CONTENT).body(errorResponse);
-        when(certificatesRepository.existsById(giftCertificateId)).thenReturn(false);
-        ResponseEntity<?> actual = giftCertificateService.deleteGiftCertificate(giftCertificateId);
-        Mockito.verify(certificatesRepository).existsById(Mockito.eq(giftCertificateId));
+        when(certificateRepository.existsById(giftCertificateId)).thenReturn(false);
+        ResponseEntity<?> actual = certificateService.deleteGiftCertificate(giftCertificateId);
+        Mockito.verify(certificateRepository).existsById(Mockito.eq(giftCertificateId));
         assertEquals(expected.getStatusCode(), actual.getStatusCode());
         assertEquals(expected.getBody(), actual.getBody());
     }
@@ -253,11 +253,11 @@ public class CertificateServiceTest {
             // populate the list with your test data
         );
 
-        when(certificatesRepository.findAll(any(Specification.class), any(Sort.class)))
+        when(certificateRepository.findAll(any(Specification.class), any(Sort.class)))
             .thenReturn(expectedGiftCertificates);
 
         // Act
-        ResponseEntity<List<GiftCertificate>> response = giftCertificateService
+        ResponseEntity<List<GiftCertificate>> response = certificateService
             .getFilteredCertificates(tagName, searchWord, nameOrder, createDateOrder);
 
         // Assert

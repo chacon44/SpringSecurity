@@ -10,7 +10,6 @@ import lombok.NonNull;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
-// A new CertificateSpecification class to create a dynamic query
 public class CertificateSpecification implements Specification<GiftCertificate> {
   private final String tagName;
   private final String searchWord;

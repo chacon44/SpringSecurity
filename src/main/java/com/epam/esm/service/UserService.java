@@ -7,7 +7,7 @@ import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Order;
 import com.epam.esm.model.User;
 import com.epam.esm.model.Tag;
-import com.epam.esm.repository.CertificatesRepository;
+import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -23,12 +23,12 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final OrderRepository orderRepository;
-  private final CertificatesRepository certificatesRepository;
+  private final CertificateRepository certificateRepository;
 
-  public UserService(UserRepository userRepository, OrderRepository orderRepository, CertificatesRepository certificatesRepository) {
+  public UserService(UserRepository userRepository, OrderRepository orderRepository, CertificateRepository certificateRepository) {
     this.userRepository = userRepository;
     this.orderRepository = orderRepository;
-    this.certificatesRepository = certificatesRepository;
+    this.certificateRepository = certificateRepository;
   }
 
   public List<UserDTO> getAllUsers() {
@@ -62,7 +62,7 @@ public class UserService {
         .orElseThrow(() -> new NoSuchElementException("User with ID " + userId + " not found."));
     UserDTO userDTO = new UserDTO(user.getId(), user.getName());
 
-    GiftCertificate certificate = certificatesRepository.findById(certificateId)
+    GiftCertificate certificate = certificateRepository.findById(certificateId)
         .orElseThrow(() -> new NoSuchElementException("Certificate with ID " + certificateId + " not found."));
     List<Long> tagIds = certificate.getTags().stream().map(Tag::getId).collect(Collectors.toList());
     CertificateDTO certificateDTO = new CertificateDTO(certificate.getId(), certificate.getName(), certificate.getDescription(), certificate.getPrice(), certificate.getDuration(), tagIds);

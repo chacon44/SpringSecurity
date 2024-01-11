@@ -1,7 +1,6 @@
 package com.epam.esm.controller;
 
 import com.epam.esm.Dto.UserDTO;
-import com.epam.esm.model.User;
 import com.epam.esm.service.UserService;
 import java.util.List;
 import java.util.NoSuchElementException;
