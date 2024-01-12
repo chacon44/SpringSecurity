@@ -52,17 +52,6 @@ public class OrderService {
     );
   }
 
-  public OrderDTO save(Order order) {
-    Order savedOrder = orderRepository.save(order);
-    return new OrderDTO(
-        savedOrder.getId(),
-        mapToUserDTO(savedOrder.getUser()),
-        mapToCertificateDTO(savedOrder.getCertificate()),
-        savedOrder.getPrice(),
-        savedOrder.getPurchaseTime()
-    );
-  }
-
   private UserDTO mapToUserDTO(User user) {
     return new UserDTO(user.getId(), user.getName());
   }

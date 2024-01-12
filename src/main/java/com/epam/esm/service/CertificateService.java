@@ -19,7 +19,6 @@ import com.epam.esm.repository.TagRepository;
 import com.epam.esm.utils.CertificateSpecification;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import lombok.NonNull;
