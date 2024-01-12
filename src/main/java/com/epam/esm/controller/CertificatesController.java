@@ -118,13 +118,12 @@ public class CertificatesController {
     }
 
     @PatchMapping("/certificate/{id}")
-    public ResponseEntity<GiftCertificate> updateCertificate(@PathVariable Long id, @RequestBody GiftCertificateRequestDTO requestDTO){
-        GiftCertificate updatedCertificate = certificateService.updateGiftCertificate(id, new GiftCertificate(
+    public ResponseEntity<?> updateCertificate(@PathVariable Long id, @RequestBody GiftCertificateRequestDTO requestDTO){
+        return certificateService.updateGiftCertificate(id, new GiftCertificate(
                 requestDTO.name(),
                 requestDTO.description(),
                 requestDTO.price(),
                 requestDTO.duration()), requestDTO.tagIds());
-        return ResponseEntity.ok(updatedCertificate);
     }
     /* Format of POST
             "name" : "name",

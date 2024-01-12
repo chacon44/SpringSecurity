@@ -33,7 +33,7 @@ public class TagServiceTest {
     private TagService tagService;
 
     @Mock
-    TagRepository tagRepository;
+    private TagRepository tagRepository;
 
     @Mock
     Tag tag;
