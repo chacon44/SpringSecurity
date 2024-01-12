@@ -8,6 +8,7 @@ Things to do:
 - [ ] Apply Hashset to tag lists and tag names in certificate filtering to avoid checking duplicates
 - [ ] Read https://spring.io/guides/gs/rest-hateoas/
 - Apply pagination and HATEOAS
+- Can a user buy the same certificate several times?
 - Do tests
 
 Task things to do

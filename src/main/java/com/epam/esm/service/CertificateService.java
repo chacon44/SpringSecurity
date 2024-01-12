@@ -10,13 +10,13 @@ import static java.lang.Double.isNaN;
 import static org.springframework.data.domain.Sort.by;
 import static org.springframework.data.domain.Sort.unsorted;
 
-import com.epam.esm.Dto.Errors.ErrorDTO;
+import com.epam.esm.dto.errors.ErrorDTO;
 import com.epam.esm.exceptions.CertificateNotFoundException;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
-import com.epam.esm.utils.CertificateSpecification;
+import com.epam.esm.filter.CertificateSpecification;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;

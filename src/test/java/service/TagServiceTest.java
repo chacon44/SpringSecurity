@@ -10,7 +10,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.FOUND;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
-import com.epam.esm.Dto.Errors.ErrorDTO;
+import com.epam.esm.dto.errors.ErrorDTO;
 import com.epam.esm.model.Tag;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.service.TagService;

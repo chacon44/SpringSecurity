@@ -1,4 +1,4 @@
-package com.epam.esm.Dto;
+package com.epam.esm.dto;
 
 public record UserDTO(
     Long id,

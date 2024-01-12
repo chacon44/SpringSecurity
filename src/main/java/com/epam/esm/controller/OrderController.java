@@ -1,12 +1,9 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.Dto.OrderDTO;
-import com.epam.esm.Dto.OrderRequestDto;
+import com.epam.esm.dto.OrderDTO;
+import com.epam.esm.dto.OrderRequestDto;
 import com.epam.esm.service.OrderService;
-import com.epam.esm.service.UserService;
 import java.util.List;
-import java.util.NoSuchElementException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,15 +13,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/orders")
+@RequestMapping("/order")
 public class OrderController {
 
   private final OrderService orderService;
-  private final UserService userService;
 
-  public OrderController(OrderService orderService, UserService userService) {
+  public OrderController(OrderService orderService) {
     this.orderService = orderService;
-    this.userService = userService;
   }
 
   @GetMapping
@@ -34,19 +29,11 @@ public class OrderController {
 
   @GetMapping("/{id}")
   public ResponseEntity<OrderDTO> getOrder(@PathVariable Long id) {
-    try {
-      OrderDTO orderDTO = orderService.getOrder(id);
-      return new ResponseEntity<>(orderDTO, HttpStatus.OK);
-    }
-    catch (NoSuchElementException e) {
-      return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
+      return orderService.getOrder(id);
   }
 
   @PostMapping
-  public ResponseEntity<OrderDTO> purchaseGiftCertificate(@RequestBody OrderRequestDto orderRequestDto) {
-    OrderDTO savedOrder = userService.purchaseGiftCertificate(orderRequestDto.userId(), orderRequestDto.certificateId());
-
-    return ResponseEntity.status(HttpStatus.CREATED).body(savedOrder);
+  public ResponseEntity<?> purchaseGiftCertificate(@RequestBody OrderRequestDto orderRequestDto) {
+    return orderService.purchaseGiftCertificate(orderRequestDto.userId(), orderRequestDto.certificateId());
   }
 }

@@ -1,4 +1,4 @@
-package com.epam.esm.Dto.Errors;
+package com.epam.esm.dto.errors;
 
 public record ErrorDTO (String errorMessage, int errorCode){
 }

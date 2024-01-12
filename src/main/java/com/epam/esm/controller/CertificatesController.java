@@ -1,6 +1,6 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.Dto.GiftCertificateRequestDTO;
+import com.epam.esm.dto.GiftCertificateRequestDTO;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.service.CertificateService;
 import java.util.List;
@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/certificate")
 public class CertificatesController {
 
     @Autowired
@@ -43,7 +45,7 @@ public class CertificatesController {
      * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
      * @produces {"application/json"} Specifies that this method returns data in application/json format.
      */
-    @PostMapping(value = "/certificate", consumes = {"application/json"}, produces = {"application/json"})
+    @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> postCertificate(@RequestBody GiftCertificateRequestDTO requestDTO) {
         GiftCertificate giftCertificate = new GiftCertificate(
                 requestDTO.name(),
@@ -66,7 +68,7 @@ public class CertificatesController {
      * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
      * @produces {"application/json"} Specifies that this method returns data in application/json format.
      */
-    @GetMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
+    @GetMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> getCertificate(@PathVariable long id) {
         return certificateService.getGiftCertificate(id);
     }
@@ -84,7 +86,7 @@ public class CertificatesController {
      * @value "/certificate/" The path where this method is mapped.
      * produces {"application/json"} Specifies that this method returns data in application/json format.
      */
-    @GetMapping(value = "/certificate/", consumes = {"application/json"}, produces = {"application/json"})
+    @GetMapping(consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<?> getFilteredCertificates(
             @RequestParam(required = false) List<String> tagName,
             @RequestParam(required = false) String searchWord,
@@ -117,7 +119,7 @@ public class CertificatesController {
         return certificateService.deleteGiftCertificate(id);
     }
 
-    @PatchMapping("/certificate/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<?> updateCertificate(@PathVariable Long id, @RequestBody GiftCertificateRequestDTO requestDTO){
         return certificateService.updateGiftCertificate(id, new GiftCertificate(
                 requestDTO.name(),
@@ -125,11 +127,4 @@ public class CertificatesController {
                 requestDTO.price(),
                 requestDTO.duration()), requestDTO.tagIds());
     }
-    /* Format of POST
-            "name" : "name",
-            "description" : "description",
-            "price" : 1.0,
-            "duration" : 1,
-            "tagIds" : [1,2]
-     */
 }

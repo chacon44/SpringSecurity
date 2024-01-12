@@ -1,4 +1,4 @@
-package com.epam.esm.utils;
+package com.epam.esm.filter;
 
 import static org.springframework.util.StringUtils.hasText;
 

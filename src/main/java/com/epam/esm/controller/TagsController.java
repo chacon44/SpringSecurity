@@ -1,12 +1,13 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.Dto.TagRequestDTO;
+import com.epam.esm.dto.TagRequestDTO;
 import com.epam.esm.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/tag")
 public class TagsController {
 
     @Autowired
@@ -27,7 +28,7 @@ public class TagsController {
      * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
      * @produces {"application/json"} Specifies that this method returns data in application/json format.
      */
-    @PostMapping(value = "/tag", consumes = {"application/json"}, produces = {"application/json"})
+    @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> postTag(@RequestBody TagRequestDTO requestDTO) {
         return tagService.saveTag(requestDTO.name());
     }
@@ -43,7 +44,7 @@ public class TagsController {
      * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
      * @produces {"application/json"} Specifies that this method returns data in application/json format.
      */
-    @GetMapping(value = "/tag/{id}", consumes = {"application/json"}, produces = {"application/json"})
+    @GetMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> getTagById(@PathVariable long id) {
         return tagService.getTag(id);
     }
@@ -59,7 +60,7 @@ public class TagsController {
      * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
      * @produces {"application/json"} Specifies that this method returns data in application/json format.
      */
-    @DeleteMapping(value = "/tag/{id}", consumes = {"application/json"}, produces = {"application/json"})
+    @DeleteMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> deleteTagById(@PathVariable long id) {
         return tagService.deleteTag(id);
     }
