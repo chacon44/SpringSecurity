@@ -1,6 +1,7 @@
 package com.epam.esm.controller;
 
 import com.epam.esm.Dto.OrderDTO;
+import com.epam.esm.Dto.OrderRequestDto;
 import com.epam.esm.service.OrderService;
 import com.epam.esm.service.UserService;
 import java.util.List;
@@ -43,8 +44,8 @@ public class OrderController {
   }
 
   @PostMapping
-  public ResponseEntity<OrderDTO> purchaseGiftCertificate(@RequestBody OrderDTO orderDto) {
-    OrderDTO savedOrder = userService.purchaseGiftCertificate(orderDto.user().id(), orderDto.certificate().certificateId());
+  public ResponseEntity<OrderDTO> purchaseGiftCertificate(@RequestBody OrderRequestDto orderRequestDto) {
+    OrderDTO savedOrder = userService.purchaseGiftCertificate(orderRequestDto.userId(), orderRequestDto.certificateId());
 
     return ResponseEntity.status(HttpStatus.CREATED).body(savedOrder);
   }

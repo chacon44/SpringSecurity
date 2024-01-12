@@ -5,6 +5,10 @@ import static com.epam.esm.exceptions.Codes.CERTIFICATE_FOUND;
 import static com.epam.esm.exceptions.Codes.CERTIFICATE_NOT_FOUND;
 import static com.epam.esm.exceptions.Messages.CERTIFICATE_ALREADY_EXISTS;
 import static com.epam.esm.exceptions.Messages.CERTIFICATE_WITH_ID_NOT_FOUND;
+import static java.lang.Double.isInfinite;
+import static java.lang.Double.isNaN;
+import static org.springframework.data.domain.Sort.by;
+import static org.springframework.data.domain.Sort.unsorted;
 
 import com.epam.esm.Dto.Errors.ErrorDTO;
 import com.epam.esm.exceptions.CertificateNotFoundException;
@@ -18,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,12 +49,10 @@ public class CertificateService {
         Optional<ResponseEntity<ErrorDTO>> requestValidationMessage = validateCertificateRequest(giftCertificate, tagIdsList);
         if (requestValidationMessage.isPresent()) return requestValidationMessage.get();
 
-        tagIdsList = tagIdsList.stream().distinct().collect(Collectors.toList());
         Optional<GiftCertificate> tryToFindCertificate = certificateRepository.findByName(giftCertificate.getName());
 
-        List<Tag> tags = tagRepository.findAllById(tagIdsList);
-        List<Tag> uniqueTags = new ArrayList<>(new HashSet<>(tags));
-        giftCertificate.setTags(uniqueTags);
+        List<Tag> tags = tagRepository.findAllByIdIn(tagIdsList);
+        giftCertificate.setTags(tags);
 
         if (tryToFindCertificate.isEmpty()) {
             GiftCertificate savedGiftCertificate = certificateRepository.save(giftCertificate);
@@ -65,7 +66,7 @@ public class CertificateService {
         }
     }
 
-    public ResponseEntity<?> getGiftCertificateById(@NonNull Long giftCertificateId) {
+    public ResponseEntity<?> getGiftCertificate(@NonNull Long giftCertificateId) {
 
         if (certificateRepository.existsById(giftCertificateId)) {
             Optional<GiftCertificate> giftCertificate = certificateRepository.findById(giftCertificateId);
@@ -79,9 +80,9 @@ public class CertificateService {
     }
 
     public ResponseEntity<List<GiftCertificate>> getFilteredCertificates(
-        String tagName, String searchWord, String nameOrder, String createDateOrder) {
+        List<String> tagNames, String searchWord, String nameOrder, String createDateOrder) {
 
-        Specification<GiftCertificate> spec = new CertificateSpecification(tagName, searchWord);
+        Specification<GiftCertificate> spec = new CertificateSpecification(tagNames, searchWord);
         Sort sort = constructSort(nameOrder, createDateOrder);
 
         List<GiftCertificate> certificates = certificateRepository.findAll(spec, sort);
@@ -89,18 +90,18 @@ public class CertificateService {
         return ResponseEntity.status(HttpStatus.OK).body(certificates);
     }
     private Sort constructSort(String nameOrder, String createDateOrder) {
-        Sort sortBy = Sort.unsorted();
+        Sort sortBy = unsorted();
 
         if ("ASC".equalsIgnoreCase(nameOrder)) {
-            sortBy = sortBy.and(Sort.by("name").ascending());
+            sortBy = sortBy.and(by("name").ascending());
         } else if ("DESC".equalsIgnoreCase(nameOrder)) {
-            sortBy = sortBy.and(Sort.by("name").descending());
+            sortBy = sortBy.and(by("name").descending());
         }
 
         if ("ASC".equalsIgnoreCase(createDateOrder)) {
-            sortBy = sortBy.and(Sort.by("createDate").ascending());
+            sortBy = sortBy.and(by("createDate").ascending());
         } else if ("DESC".equalsIgnoreCase(createDateOrder)) {
-            sortBy = sortBy.and(Sort.by("createDate").descending());
+            sortBy = sortBy.and(by("createDate").descending());
         }
 
         return sortBy;
@@ -177,7 +178,7 @@ public class CertificateService {
 
         if (giftCertificate.getPrice() != null) {
             double price = giftCertificate.getPrice();
-            if (Double.isNaN(price) || Double.isInfinite(price)) {
+            if (isNaN(price) || isInfinite(price)) {
                 errors.add("Price must be a finite number");
             } else if (price < 0) {
                 errors.add("Price must be non-negative");

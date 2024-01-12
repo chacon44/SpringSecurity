@@ -52,7 +52,7 @@ public class User {
    * It can be modified externally.
    */
   @Setter
-  @Column(name = "name", nullable = false)
+  @Column(name = "name")
   private String name;
 
 

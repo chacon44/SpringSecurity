@@ -3,6 +3,7 @@ package com.epam.esm.controller;
 import com.epam.esm.Dto.GiftCertificateRequestDTO;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.service.CertificateService;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -67,7 +68,7 @@ public class CertificatesController {
      */
     @GetMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> getCertificate(@PathVariable long id) {
-        return certificateService.getGiftCertificateById(id);
+        return certificateService.getGiftCertificate(id);
     }
 
     /**
@@ -85,7 +86,7 @@ public class CertificatesController {
      */
     @GetMapping(value = "/certificate/", consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<?> getFilteredCertificates(
-            @RequestParam(required = false) String tagName,
+            @RequestParam(required = false) List<String> tagName,
             @RequestParam(required = false) String searchWord,
             @RequestParam(required = false) String nameOrder,
             @RequestParam(required = false) String createDateOrder) {
