@@ -32,6 +32,7 @@ public class GenerationService {
   private CertificateRepository giftCertificateRepository;
 
   Faker faker = new Faker();
+  Random random = new Random();
 
   public void deleteData() {
     orderRepository.deleteAll();
@@ -90,21 +91,27 @@ public class GenerationService {
   }
 
   private void tagsAssignation(GiftCertificate certificate) {
-    // Get all tags
     List<Tag> tags = tagRepository.findAll();
-    Random random = new Random();
-
-    // Select random tags from the list for every new certificate
     List<Tag> certificateTags = new ArrayList<>();
+
+    assignRandomTags(tags, random, certificateTags);
+    certificate.setTags(certificateTags);
+  }
+
+  private void assignRandomTags(List<Tag> tags, Random random, List<Tag> certificateTags) {
     for (int j = 0; j < faker.number().numberBetween(0, 4); j++) { // A certificate can have 0-4 tags
       Tag randomTag = tags.get(random.nextInt(tags.size()));
       if (!certificateTags.contains(randomTag)) {
         certificateTags.add(randomTag);
       }
     }
-    certificate.setTags(certificateTags);
   }
-
+  private static String maximumLengthChecking(String name) {
+    if (name.length() > 200) {
+      name = name.substring(0, 200);
+    }
+    return name;
+  }
   private void durationAssignation(GiftCertificate certificate) {
     certificate.setDuration(faker.number().randomNumber()); // Set random number as duration
   }
@@ -115,17 +122,13 @@ public class GenerationService {
 
   private void descriptionAssignation(GiftCertificate certificate) {
     String descriptionName = faker.chuckNorris().fact();
-    if (descriptionName.length() > 200) {
-      descriptionName = descriptionName.substring(0, 200);
-    }
+    descriptionName = maximumLengthChecking(descriptionName);
     certificate.setDescription(descriptionName);
   }
 
   private void nameAssignation(GiftCertificate certificate) {
     String certificateName = faker.animal().name();
-    if (certificateName.length() > 200) {
-      certificateName = certificateName.substring(0, 200);
-    }
+    certificateName = maximumLengthChecking(certificateName);
     certificate.setName(certificateName);
   }
 
