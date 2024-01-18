@@ -19,6 +19,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "tag")
+
 public class Tag{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

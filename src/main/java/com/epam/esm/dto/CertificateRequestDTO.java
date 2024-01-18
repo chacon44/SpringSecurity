@@ -2,7 +2,7 @@ package com.epam.esm.dto;
 
 import java.util.List;
 
-public record GiftCertificateRequestDTO(
+public record CertificateRequestDTO(
         String name,
         String description,
         Double price,

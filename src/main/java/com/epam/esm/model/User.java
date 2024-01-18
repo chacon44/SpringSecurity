@@ -29,6 +29,7 @@ import lombok.Setter;
  * Use a builder pattern for object creation.
  */
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

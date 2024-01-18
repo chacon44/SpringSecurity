@@ -1,8 +1,6 @@
 package com.epam.esm.service;
 
-import static com.epam.esm.exceptions.Codes.CERTIFICATE_BAD_REQUEST;
-import static com.epam.esm.exceptions.Codes.CERTIFICATE_FOUND;
-import static com.epam.esm.exceptions.Codes.CERTIFICATE_NOT_FOUND;
+import static com.epam.esm.exceptions.ErrorCode.CERTIFICATE_BAD_REQUEST;
 import static com.epam.esm.exceptions.Messages.CERTIFICATE_ALREADY_EXISTS;
 import static com.epam.esm.exceptions.Messages.CERTIFICATE_WITH_ID_NOT_FOUND;
 import static java.lang.Double.isInfinite;
@@ -10,24 +8,26 @@ import static java.lang.Double.isNaN;
 import static org.springframework.data.domain.Sort.by;
 import static org.springframework.data.domain.Sort.unsorted;
 
+import com.epam.esm.dto.CertificateReturnDTO;
 import com.epam.esm.dto.errors.ErrorDTO;
-import com.epam.esm.exceptions.CertificateNotFoundException;
+import com.epam.esm.exceptions.CustomizedException;
+import com.epam.esm.exceptions.ErrorCode;
+import com.epam.esm.filter.CertificateSpecification;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
-import com.epam.esm.filter.CertificateSpecification;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -43,125 +43,127 @@ public class CertificateService {
         this.tagRepository = tagRepository;
     }
 
-    public ResponseEntity<?> saveGiftCertificate(@NonNull GiftCertificate giftCertificate, List<Long> tagIdsList) {
+    public CertificateReturnDTO saveGiftCertificate(@NonNull GiftCertificate giftCertificate, List<Long> tagIdsList) {
+        try {
+            Optional<ErrorDTO> requestValidationMessage = validateCertificateRequest(giftCertificate, tagIdsList);
+            if (requestValidationMessage.isPresent())
+                throw new CustomizedException(requestValidationMessage.get().errorMessage(), CERTIFICATE_BAD_REQUEST);
 
-        Optional<ResponseEntity<ErrorDTO>> requestValidationMessage = validateCertificateRequest(giftCertificate, tagIdsList);
-        if (requestValidationMessage.isPresent()) return requestValidationMessage.get();
+            Optional<GiftCertificate> tryToFindCertificate = certificateRepository.findByName(giftCertificate.getName());
 
-        Optional<GiftCertificate> tryToFindCertificate = certificateRepository.findByName(giftCertificate.getName());
+            if (tryToFindCertificate.isEmpty()) {
+                List<Tag> tags = tagRepository.findAllByIdIn(tagIdsList);
+                giftCertificate.setTags(tags);
+                GiftCertificate savedGiftCertificate = certificateRepository.save(giftCertificate);
 
+                return convertToCertificateDTO(savedGiftCertificate);
+            } else {
+                GiftCertificate foundCertificate = tryToFindCertificate.get();
+                Long idFound = foundCertificate.getId();
 
-
-        if (tryToFindCertificate.isEmpty()) {
-            List<Tag> tags = tagRepository.findAllByIdIn(tagIdsList);
-            giftCertificate.setTags(tags);
-            GiftCertificate savedGiftCertificate = certificateRepository.save(giftCertificate);
-                return new ResponseEntity<>(savedGiftCertificate, HttpStatus.CREATED);
-
-        } else {
-            GiftCertificate foundCertificate = tryToFindCertificate.get();
-            Long idFound = foundCertificate.getId();
-            ErrorDTO errorResponse = new ErrorDTO(CERTIFICATE_ALREADY_EXISTS.formatted(idFound), CERTIFICATE_FOUND);
-            return ResponseEntity.status(HttpStatus.FOUND).body(errorResponse);
+                throw new CustomizedException(CERTIFICATE_ALREADY_EXISTS.formatted(idFound), ErrorCode.CERTIFICATE_ALREADY_FOUND);
+            }
+        } catch (DataAccessException ex) {
+            throw new CustomizedException("Database error while saving GiftCertificate", ErrorCode.CERTIFICATE_DATABASE_ERROR, ex);
         }
     }
 
-    public ResponseEntity<?> getGiftCertificate(@NonNull Long giftCertificateId) {
-        Optional<GiftCertificate> giftCertificate = certificateRepository.findById(giftCertificateId);
+    public CertificateReturnDTO getGiftCertificate(@NonNull Long giftCertificateId) {
+        try {
+            Optional<GiftCertificate> giftCertificate = certificateRepository.findById(giftCertificateId);
 
-        if (giftCertificate.isPresent()) {
-            return ResponseEntity.status(HttpStatus.FOUND).body(giftCertificate.get());
-        } else {
-            String message = CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId);
-
-            ErrorDTO errorResponse = new ErrorDTO(message, CERTIFICATE_NOT_FOUND);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            if (giftCertificate.isPresent()) {
+                return convertToCertificateDTO(giftCertificate.get());
+            } else {
+                String message = CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId);
+                throw new CustomizedException(message, ErrorCode.CERTIFICATE_NOT_FOUND);
+            }
+        } catch (DataAccessException ex) {
+            throw new CustomizedException("Database error while getting gift certificate with id: " + giftCertificateId,
+                ErrorCode.CERTIFICATE_DATABASE_ERROR, ex);
         }
     }
 
-    public ResponseEntity<List<GiftCertificate>> getFilteredCertificates(
-        List<String> tagNames, String searchWord, String nameOrder, String createDateOrder) {
+    public List<CertificateReturnDTO> getFilteredCertificates(List<String> tagNames, String searchWord,
+        String nameOrder, String createDateOrder) {
+        try {
+            Specification<GiftCertificate> spec = new CertificateSpecification(tagNames, searchWord);
+            Sort sort = constructSort(nameOrder, createDateOrder);
+            List<GiftCertificate> certificates = certificateRepository.findAll(spec, sort);
 
-        Specification<GiftCertificate> spec = new CertificateSpecification(tagNames, searchWord);
-        Sort sort = constructSort(nameOrder, createDateOrder);
-
-        List<GiftCertificate> certificates = certificateRepository.findAll(spec, sort);
-
-        return ResponseEntity.status(HttpStatus.OK).body(certificates);
+            return certificates.stream()
+                .map(this::convertToCertificateDTO)
+                .collect(Collectors.toList());
+        } catch (DataAccessException ex) {
+            throw new CustomizedException("Database error while getting filtered certificates", ErrorCode.CERTIFICATE_DATABASE_ERROR, ex);
+        }
     }
 
-    private Sort constructSort(String nameOrder, String createDateOrder) {
-        Sort sortBy = unsorted();
+    public void deleteGiftCertificate(Long certificateId) {
 
-        if ("ASC".equalsIgnoreCase(nameOrder)) {
-            sortBy = sortBy.and(by("name").ascending());
-        } else if ("DESC".equalsIgnoreCase(nameOrder)) {
-            sortBy = sortBy.and(by("name").descending());
+        if(!certificateRepository.existsById(certificateId)){
+            throw new CustomizedException(CERTIFICATE_WITH_ID_NOT_FOUND.formatted(certificateId), ErrorCode.CERTIFICATE_NOT_FOUND);
         }
-
-        if ("ASC".equalsIgnoreCase(createDateOrder)) {
-            sortBy = sortBy.and(by("createDate").ascending());
-        } else if ("DESC".equalsIgnoreCase(createDateOrder)) {
-            sortBy = sortBy.and(by("createDate").descending());
+        try {
+            certificateRepository.deleteById(certificateId);
+        } catch (DataAccessException ex) {
+            throw new CustomizedException("Database error during deleting certificate with id " + certificateId, ErrorCode.CERTIFICATE_DATABASE_ERROR, ex);
         }
-
-        return sortBy;
     }
-
-    public ResponseEntity<?> deleteGiftCertificate(Long giftCertificateId) {
-
-        if(certificateRepository.existsById(giftCertificateId)){
-            certificateRepository.deleteById(giftCertificateId);
-            return ResponseEntity.status(HttpStatus.FOUND).body(null);
-        }
-        else
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
-            new ErrorDTO(
-                CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId),
-                CERTIFICATE_NOT_FOUND));
-    }
-
     @Transactional
-    public ResponseEntity<?> updateGiftCertificate(@NonNull Long certificateId, GiftCertificate updates, List<Long> newTagIdsList) {
-        GiftCertificate existingCertificate = certificateRepository.findById(certificateId)
-            .orElseThrow(() -> new CertificateNotFoundException(certificateId));
+    public CertificateReturnDTO updateGiftCertificate(@NonNull Long certificateId, GiftCertificate updates, List<Long> newTagIdsList) {
 
-        if (updates.getName() != null) {
-            existingCertificate.setName(updates.getName());
-        }
-        if (updates.getDescription() != null) {
-            existingCertificate.setDescription(updates.getDescription());
-        }
-        if (updates.getPrice() != null) {
-            existingCertificate.setPrice(updates.getPrice());
-        }
-        if (updates.getDuration() != null) {
-            existingCertificate.setDuration(updates.getDuration());
-        }
-        if (newTagIdsList != null) {
-            List<Tag> uniqueTags = tagRepository.findAllByIdIn(newTagIdsList);
-            existingCertificate.getTags().clear(); // remove old tags
-            existingCertificate.getTags().addAll(uniqueTags); // add new tags
-        }
+        try {
+            Optional<GiftCertificate> optCertificate = certificateRepository.findById(
+                certificateId);
 
-        //return certificateRepository.save(existingCertificate);
-        return ResponseEntity.status(HttpStatus.OK).body(certificateRepository.save(existingCertificate));
+            if (optCertificate.isEmpty()) {
+                throw new CustomizedException(
+                    "Gift certificate not found with id: " + certificateId,
+                    ErrorCode.CERTIFICATE_NOT_FOUND);
+            }
 
+            GiftCertificate existingCertificate = optCertificate.get();
+
+            if (updates.getName() != null) {
+                existingCertificate.setName(updates.getName());
+            }
+            if (updates.getDescription() != null) {
+                existingCertificate.setDescription(updates.getDescription());
+            }
+            if (updates.getPrice() != null) {
+                existingCertificate.setPrice(updates.getPrice());
+            }
+            if (updates.getDuration() != null) {
+                existingCertificate.setDuration(updates.getDuration());
+            }
+            if (newTagIdsList != null) {
+                List<Tag> uniqueTags = tagRepository.findAllByIdIn(newTagIdsList);
+                existingCertificate.setTags(uniqueTags);
+            }
+
+            GiftCertificate updatedCertificate = certificateRepository.save(existingCertificate);
+
+            return convertToCertificateDTO(updatedCertificate);
+        } catch (DataAccessException ex){
+            throw new CustomizedException("Database error during update certificate with id " + certificateId, ErrorCode.CERTIFICATE_DATABASE_ERROR, ex);
+
+        }
     }
 
-    private Optional<ResponseEntity<ErrorDTO>> validateCertificateRequest(GiftCertificate giftCertificate, List<Long> tagIds) {
+    private Optional<ErrorDTO> validateCertificateRequest(GiftCertificate giftCertificate, List<Long> tagIds) {
 
         Optional<String> validationMessage = validateRequest(giftCertificate);
         if (validationMessage.isPresent()) {
-            ErrorDTO errorResponse = new ErrorDTO(validationMessage.get(), CERTIFICATE_BAD_REQUEST);
-            return Optional.of(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse));
+            ErrorDTO errorResponse = new ErrorDTO(validationMessage.get(), CERTIFICATE_BAD_REQUEST.getErrorCode());
+            return Optional.of(errorResponse);
         }
 
         List<Tag> existingTags = tagRepository.findAllById(tagIds);
 
         if(existingTags.size() != tagIds.size()){
-            ErrorDTO errorResponse = new ErrorDTO("non existing tags", CERTIFICATE_BAD_REQUEST);
-            return Optional.of(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse));
+            ErrorDTO errorResponse = new ErrorDTO("non existing tags", CERTIFICATE_BAD_REQUEST.getErrorCode());
+            return Optional.of(errorResponse);
         }
 
         return Optional.empty();
@@ -204,6 +206,38 @@ public class CertificateService {
         } else {
             return Optional.of(String.join(", ", errors));
         }
+    }
+    private Sort constructSort(String nameOrder, String createDateOrder) {
+        Sort sortBy = unsorted();
+
+        if ("ASC".equalsIgnoreCase(nameOrder)) {
+            sortBy = sortBy.and(by("name").ascending());
+        } else if ("DESC".equalsIgnoreCase(nameOrder)) {
+            sortBy = sortBy.and(by("name").descending());
+        }
+
+        if ("ASC".equalsIgnoreCase(createDateOrder)) {
+            sortBy = sortBy.and(by("createDate").ascending());
+        } else if ("DESC".equalsIgnoreCase(createDateOrder)) {
+            sortBy = sortBy.and(by("createDate").descending());
+        }
+
+        return sortBy;
+    }
+
+    public CertificateReturnDTO convertToCertificateDTO(GiftCertificate certificate) {
+
+        List<Long> tagIds = certificate.getTags().stream()
+            .map(Tag::getId)
+            .collect(Collectors.toList());
+
+
+        return new CertificateReturnDTO(certificate.getId(),
+            certificate.getName(),
+            certificate.getDescription(),
+            certificate.getPrice(),
+            certificate.getDuration(),
+            tagIds);
     }
 }
 

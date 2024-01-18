@@ -1,6 +1,11 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.dto.GiftCertificateRequestDTO;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.OK;
+
+import com.epam.esm.dto.CertificateRequestDTO;
+import com.epam.esm.dto.CertificateReturnDTO;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.service.CertificateService;
 import java.util.List;
@@ -46,14 +51,17 @@ public class CertificatesController {
      * @produces {"application/json"} Specifies that this method returns data in application/json format.
      */
     @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
-    ResponseEntity<?> postCertificate(@RequestBody GiftCertificateRequestDTO requestDTO) {
+    ResponseEntity<?> postCertificate(@RequestBody CertificateRequestDTO requestDTO) {
         GiftCertificate giftCertificate = new GiftCertificate(
                 requestDTO.name(),
                 requestDTO.description(),
                 requestDTO.price(),
                 requestDTO.duration()
         );
-        return certificateService.saveGiftCertificate(giftCertificate, requestDTO.tagIds());
+
+        CertificateReturnDTO returnDTO = certificateService.saveGiftCertificate(giftCertificate, requestDTO.tagIds());
+
+        return ResponseEntity.status(CREATED).body(returnDTO);
     }
 
     /**
@@ -70,7 +78,7 @@ public class CertificatesController {
      */
     @GetMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> getCertificate(@PathVariable long id) {
-        return certificateService.getGiftCertificate(id);
+        return ResponseEntity.status(OK).body(certificateService.getGiftCertificate(id));
     }
 
     /**
@@ -93,11 +101,13 @@ public class CertificatesController {
             @RequestParam(required = false) String nameOrder,
             @RequestParam(required = false) String createDateOrder) {
 
-        return certificateService.getFilteredCertificates(
-                tagName,
-                searchWord,
-                nameOrder,
-                createDateOrder);
+        List<CertificateReturnDTO> returnCertificate = certificateService.getFilteredCertificates(
+            tagName,
+            searchWord,
+            nameOrder,
+            createDateOrder);
+
+        return ResponseEntity.status(OK).body(returnCertificate);
     }
 
     /**
@@ -116,15 +126,17 @@ public class CertificatesController {
      */
     @DeleteMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> deleteCertificate(@PathVariable long id) {
-        return certificateService.deleteGiftCertificate(id);
+        certificateService.deleteGiftCertificate(id);
+        return ResponseEntity.status(NO_CONTENT).build();
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<?> updateCertificate(@PathVariable Long id, @RequestBody GiftCertificateRequestDTO requestDTO){
-        return certificateService.updateGiftCertificate(id, new GiftCertificate(
+    public ResponseEntity<?> updateCertificate(@PathVariable Long id, @RequestBody CertificateRequestDTO requestDTO){
+        CertificateReturnDTO returnCertificate = certificateService.updateGiftCertificate(id, new GiftCertificate(
                 requestDTO.name(),
                 requestDTO.description(),
                 requestDTO.price(),
                 requestDTO.duration()), requestDTO.tagIds());
+        return ResponseEntity.status(OK).body(returnCertificate);
     }
 }

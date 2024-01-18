@@ -1,6 +1,11 @@
 package com.epam.esm.controller;
 
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.OK;
+
 import com.epam.esm.dto.TagRequestDTO;
+import com.epam.esm.dto.TagReturnDTO;
 import com.epam.esm.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,8 +34,8 @@ public class TagsController {
      * @produces {"application/json"} Specifies that this method returns data in application/json format.
      */
     @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
-    ResponseEntity<?> postTag(@RequestBody TagRequestDTO requestDTO) {
-        return tagService.saveTag(requestDTO.name());
+    ResponseEntity<TagReturnDTO> postTag(@RequestBody TagRequestDTO requestDTO) {
+        return ResponseEntity.status(CREATED).body(tagService.saveTag(requestDTO.name()));
     }
 
     /**
@@ -45,8 +50,8 @@ public class TagsController {
      * @produces {"application/json"} Specifies that this method returns data in application/json format.
      */
     @GetMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
-    ResponseEntity<?> getTagById(@PathVariable long id) {
-        return tagService.getTag(id);
+    public ResponseEntity<TagReturnDTO> getTag(@PathVariable long id) {
+        return ResponseEntity.status(OK).body(tagService.getTag(id));
     }
 
     /**
@@ -61,7 +66,8 @@ public class TagsController {
      * @produces {"application/json"} Specifies that this method returns data in application/json format.
      */
     @DeleteMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
-    ResponseEntity<?> deleteTagById(@PathVariable long id) {
-        return tagService.deleteTag(id);
+    public ResponseEntity<Void> deleteTagById(@PathVariable long id) {
+        tagService.deleteTag(id);
+        return ResponseEntity.status(NO_CONTENT).build();
     }
 }
