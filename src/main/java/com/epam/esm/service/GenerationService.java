@@ -1,5 +1,7 @@
 package com.epam.esm.service;
 
+import com.epam.esm.exceptions.CustomizedException;
+import com.epam.esm.exceptions.ErrorCode;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
 import com.epam.esm.model.User;
@@ -16,6 +18,7 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -35,43 +38,55 @@ public class GenerationService {
   Random random = new Random();
 
   public void deleteData() {
-    orderRepository.deleteAll();
-    giftCertificateRepository.deleteAll();
-    tagRepository.deleteAll();
-    userRepository.deleteAll();
+    try {
+      orderRepository.deleteAll();
+      giftCertificateRepository.deleteAll();
+      tagRepository.deleteAll();
+      userRepository.deleteAll();
+    } catch (DataAccessException ex) {
+      throw new CustomizedException("Error deleting data from repositories", ErrorCode.DATABASE_ERROR, ex);
+    }
   }
 
   public void generateUsers(){
+    try {
 
-    IntStream.range(0, 1000)
-        .mapToObj(i -> {
-          User user = new User();
-          user.setName(faker.name().fullName());
-          return user;
-        })
-        .forEach(userRepository::save);
+      IntStream.range(0, 1000)
+          .mapToObj(i -> {
+            User user = new User();
+            user.setName(faker.name().fullName());
+            return user;
+          })
+          .forEach(userRepository::save);
+    }catch (DataAccessException ex) {
+      throw new CustomizedException("Error generating users", ErrorCode.DATABASE_ERROR, ex);
+    }
   }
 
   public void generateTags() {
 
-    IntStream.range(0, 1000).forEach(i -> {
-      String tagName = switch (i % 4) {
-        case 0 -> "Book genre: " + faker.book().genre();
-        case 1 -> "Favourite artist: " + faker.artist().name();
-        case 2 -> "Food: " + faker.food().ingredient();
-        case 3 -> "Book title: " + faker.book().title();
-        default -> throw new IllegalStateException();
-      };
-      Tag tag = new Tag();
-      tag.setName(tagName);
+    try {
+      IntStream.range(0, 1000).forEach(i -> {
+        String tagName = switch (i % 4) {
+          case 0 -> "Book genre: " + faker.book().genre();
+          case 1 -> "Favourite artist: " + faker.artist().name();
+          case 2 -> "Food: " + faker.food().ingredient();
+          case 3 -> "Book title: " + faker.book().title();
+          default -> throw new IllegalStateException();
+        };
+        Tag tag = new Tag();
+        tag.setName(tagName);
 
-      tagRepository.save(tag);
-    });
+        tagRepository.save(tag);
+      });
+    }catch (DataAccessException ex) {
+      throw new CustomizedException("Error generating tags", ErrorCode.DATABASE_ERROR, ex);
+    }
   }
 
 
   public void generateCertificates() {
-
+    try{
     GiftCertificate certificate = new GiftCertificate();
 
     for (int i = 0; i < 5000; i++) {
@@ -79,6 +94,9 @@ public class GenerationService {
       certificateCreation(certificate);
       giftCertificateRepository.save(certificate);
     }
+    }catch (DataAccessException ex) {
+    throw new CustomizedException("Error generating certificates", ErrorCode.DATABASE_ERROR, ex);
+  }
   }
 
   private void certificateCreation(GiftCertificate certificate) {
@@ -91,19 +109,30 @@ public class GenerationService {
   }
 
   private void tagsAssignation(GiftCertificate certificate) {
-    List<Tag> tags = tagRepository.findAll();
-    List<Tag> certificateTags = new ArrayList<>();
+    try {
 
-    assignRandomTags(tags, random, certificateTags);
-    certificate.setTags(certificateTags);
+      List<Tag> tags = tagRepository.findAll();
+      List<Tag> certificateTags = new ArrayList<>();
+
+      assignRandomTags(tags, random, certificateTags);
+      certificate.setTags(certificateTags);
+    }
+    catch (DataAccessException ex) {
+    throw new CustomizedException("Error assigning tags", ErrorCode.DATABASE_ERROR, ex);
+  }
   }
 
   private void assignRandomTags(List<Tag> tags, Random random, List<Tag> certificateTags) {
-    for (int j = 0; j < faker.number().numberBetween(0, 4); j++) { // A certificate can have 0-4 tags
-      Tag randomTag = tags.get(random.nextInt(tags.size()));
-      if (!certificateTags.contains(randomTag)) {
-        certificateTags.add(randomTag);
+    try {
+      for (int j = 0; j < faker.number().numberBetween(0, 4);
+          j++) { // A certificate can have 0-4 tags
+        Tag randomTag = tags.get(random.nextInt(tags.size()));
+        if (!certificateTags.contains(randomTag)) {
+          certificateTags.add(randomTag);
+        }
       }
+    }catch (DataAccessException ex) {
+      throw new CustomizedException("Error assigning random tags", ErrorCode.DATABASE_ERROR, ex);
     }
   }
   private static String maximumLengthChecking(String name) {
@@ -117,7 +146,8 @@ public class GenerationService {
   }
 
   private void priceAssignation(GiftCertificate certificate) {
-    certificate.setPrice(faker.number().randomDouble(2, 20, 1000)); //generating random price between 20 and 100
+    certificate.setPrice(faker.number().randomDouble(2, 20, 1000));
+    //generating random price between 20 and 100
   }
 
   private void descriptionAssignation(GiftCertificate certificate) {

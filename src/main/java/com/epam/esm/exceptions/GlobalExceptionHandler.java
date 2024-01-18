@@ -19,13 +19,10 @@ public class GlobalExceptionHandler {
   }
 
   private HttpStatus mapErrorCodeToStatus(ErrorCode errorCode) {
-    switch (errorCode) {
-      case TAG_DATABASE_ERROR:
-        return HttpStatus.NOT_FOUND;
-      case TAG_BAD_REQUEST:
-        return HttpStatus.BAD_REQUEST;
-      default:
-        return HttpStatus.INTERNAL_SERVER_ERROR;
-    }
+    return switch (errorCode) {
+      case TAG_DATABASE_ERROR -> HttpStatus.NOT_FOUND;
+      case TAG_BAD_REQUEST -> HttpStatus.BAD_REQUEST;
+      default -> HttpStatus.INTERNAL_SERVER_ERROR;
+    };
   }
 }

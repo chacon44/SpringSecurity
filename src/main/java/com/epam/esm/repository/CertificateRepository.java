@@ -13,6 +13,5 @@ import org.springframework.stereotype.Repository;
 public interface CertificateRepository extends JpaRepository<GiftCertificate, Long> {
   @NonNull
   Page<GiftCertificate> findAll(@NonNull Specification<GiftCertificate> spec,@NonNull Pageable pageable);
-
   Optional<GiftCertificate> findByName(String certificateName);
 }

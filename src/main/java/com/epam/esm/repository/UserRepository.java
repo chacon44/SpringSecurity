@@ -9,7 +9,15 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-  @Query("SELECT u FROM User u LEFT JOIN FETCH u.orders WHERE u.id = (" +
-      "SELECT o.user.id FROM Order o GROUP BY o.user.id ORDER BY SUM(o.price) DESC LIMIT 1)")
+  String FETCH_ALL_USER_FIELDS = "SELECT u FROM User u ";
+  String FETCH_ORDERS = "LEFT JOIN FETCH u.orders ";
+  String GET_USER_WITH_APPLIED_FILTER = "WHERE u.id = ";
+  String SELECT_USER_IDS_FROM_ORDERS = "SELECT o.user.id FROM Order o ";
+  String ORDER_DESCENDANT = "ORDER BY o.price DESC ";
+  String SELECT_HIGHEST_VALUE = "LIMIT 1";
+  String FILTER ="(" + SELECT_USER_IDS_FROM_ORDERS + ORDER_DESCENDANT + SELECT_HIGHEST_VALUE + ")";
+
+  String query = FETCH_ALL_USER_FIELDS + FETCH_ORDERS + GET_USER_WITH_APPLIED_FILTER + FILTER;
+  @Query(query)
   Optional<User> findUserWithHighestOrdersCost();
 }

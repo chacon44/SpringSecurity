@@ -34,8 +34,10 @@ public enum ErrorCode {
   ORDER_NOT_FOUND("404"+ORDER.errorCode),
   ORDER_INTERNAL_SERVER_ERROR("500"+ORDER.errorCode),
   ORDER_BAD_REQUEST("402"+ORDER.errorCode),
-  ORDER_CONVERSION_ERROR("405"+ORDER.errorCode);
+  ORDER_CONVERSION_ERROR("405"+ORDER.errorCode),
 
+  //GENERAL
+  DATABASE_ERROR("400");
   private final String errorCode;
 
   ErrorCode(String errorCode) {
