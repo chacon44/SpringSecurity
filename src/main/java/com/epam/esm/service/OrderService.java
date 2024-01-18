@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,11 +36,11 @@ public class OrderService {
     this.certificateRepository = certificateRepository;
   }
 
-  public List<OrderDTO> getAllOrders() {
+  public Page<OrderDTO> getAllOrders(Pageable pageable) {
     try {
-      List<Order> orders = orderRepository.findAll();
+      Page<Order> ordersPage = orderRepository.findAll(pageable);
 
-      return orders.stream().map(order -> {
+      return ordersPage.map(order -> {
         try {
           return new OrderDTO(
               order.getId(),
@@ -47,20 +49,18 @@ public class OrderService {
               order.getPrice(),
               order.getPurchaseTime()
           );
-        } catch(Exception ex) {
+        } catch (Exception ex) {
           throw new CustomizedException("Error while converting order to OrderDTO", ErrorCode.ORDER_CONVERSION_ERROR, ex);
         }
-      }).collect(Collectors.toList());
+      });
     } catch (DataAccessException ex) {
       throw new CustomizedException("Database error while getting all orders", ErrorCode.ORDER_DATABASE_ERROR, ex);
     }
   }
-  public List<OrderDTO> getOrdersByUserId(Long userId) {
+  public Page<OrderDTO> getOrdersByUserId(Long userId, Pageable pageable) {
     try {
-      List<Order> orders = orderRepository.findAllByUserId(userId);
-      return orders.stream()
-          .map(this::convertToOrderDTO)
-          .collect(Collectors.toList());
+      Page<Order> ordersPage = orderRepository.findAllByUserId(userId, pageable);
+      return ordersPage.map(this::convertToOrderDTO);
     } catch (DataAccessException ex) {
       throw new CustomizedException("Database error while retrieving orders for user id:" + userId, ErrorCode.ORDER_DATABASE_ERROR, ex);
     }

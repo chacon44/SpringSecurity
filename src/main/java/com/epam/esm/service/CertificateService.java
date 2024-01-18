@@ -5,8 +5,6 @@ import static com.epam.esm.exceptions.Messages.CERTIFICATE_ALREADY_EXISTS;
 import static com.epam.esm.exceptions.Messages.CERTIFICATE_WITH_ID_NOT_FOUND;
 import static java.lang.Double.isInfinite;
 import static java.lang.Double.isNaN;
-import static org.springframework.data.domain.Sort.by;
-import static org.springframework.data.domain.Sort.unsorted;
 
 import com.epam.esm.dto.CertificateReturnDTO;
 import com.epam.esm.dto.errors.ErrorDTO;
@@ -26,7 +24,8 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -84,16 +83,15 @@ public class CertificateService {
         }
     }
 
-    public List<CertificateReturnDTO> getFilteredCertificates(List<String> tagNames, String searchWord,
-        String nameOrder, String createDateOrder) {
+    public Page<CertificateReturnDTO> getFilteredCertificates(
+        List<String> tagNames,
+        String searchWord,
+        Pageable pageable) {
+
         try {
             Specification<GiftCertificate> spec = new CertificateSpecification(tagNames, searchWord);
-            Sort sort = constructSort(nameOrder, createDateOrder);
-            List<GiftCertificate> certificates = certificateRepository.findAll(spec, sort);
-
-            return certificates.stream()
-                .map(this::convertToCertificateDTO)
-                .collect(Collectors.toList());
+            Page<GiftCertificate> certificatesPage = certificateRepository.findAll(spec, pageable);
+            return certificatesPage.map(this::convertToCertificateDTO);
         } catch (DataAccessException ex) {
             throw new CustomizedException("Database error while getting filtered certificates", ErrorCode.CERTIFICATE_DATABASE_ERROR, ex);
         }
@@ -206,23 +204,6 @@ public class CertificateService {
         } else {
             return Optional.of(String.join(", ", errors));
         }
-    }
-    private Sort constructSort(String nameOrder, String createDateOrder) {
-        Sort sortBy = unsorted();
-
-        if ("ASC".equalsIgnoreCase(nameOrder)) {
-            sortBy = sortBy.and(by("name").ascending());
-        } else if ("DESC".equalsIgnoreCase(nameOrder)) {
-            sortBy = sortBy.and(by("name").descending());
-        }
-
-        if ("ASC".equalsIgnoreCase(createDateOrder)) {
-            sortBy = sortBy.and(by("createDate").ascending());
-        } else if ("DESC".equalsIgnoreCase(createDateOrder)) {
-            sortBy = sortBy.and(by("createDate").descending());
-        }
-
-        return sortBy;
     }
 
     public CertificateReturnDTO convertToCertificateDTO(GiftCertificate certificate) {

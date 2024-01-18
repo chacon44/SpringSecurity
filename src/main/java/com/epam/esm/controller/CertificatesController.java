@@ -1,5 +1,7 @@
 package com.epam.esm.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
@@ -10,6 +12,11 @@ import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.service.CertificateService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,115 +35,67 @@ public class CertificatesController {
     @Autowired
     private CertificateService certificateService;
 
-    /**
-     * Creates a new gift certificate.
-     *
-     * @param requestDTO The data transfer object containing the details of the gift certificate to be created.
-     * @return ResponseEntity<?> A response entity representing the result of the creation operation.
-     *          A ResponseEntity object that contains either the saved gift certificate,
-     *              an error message indicating the gift certificate could not be saved,
-     *              or an error message indicating the gift certificate already exists.
-     * <p>
-     *               If the gift certificate is saved successfully, it returns the saved certificate
-     *               with a HttpStatus of CREATED (201)
-     *               If the gift certificate could not be saved for any reason, it returns
-     *               an ErrorDTO object with a message and a HttpStatus of BAD_REQUEST (400).
-     * <p>
-     *               If a gift certificate with the same name already exists in the database,
-     *               it returns an ErrorDTO object with a message and a HttpStatus of FOUND (302).
-     *
-     * @PostMapping This annotation maps HTTP POST requests onto this method.
-     * @value "/certificate" The path where this method is mapped.
-     * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
-     * @produces {"application/json"} Specifies that this method returns data in application/json format.
-     */
     @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
-    ResponseEntity<?> postCertificate(@RequestBody CertificateRequestDTO requestDTO) {
+    public ResponseEntity<EntityModel<CertificateReturnDTO>> postCertificate(@RequestBody CertificateRequestDTO requestDTO) {
         GiftCertificate giftCertificate = new GiftCertificate(
-                requestDTO.name(),
-                requestDTO.description(),
-                requestDTO.price(),
-                requestDTO.duration()
-        );
+            requestDTO.name(),
+            requestDTO.description(),
+            requestDTO.price(),
+            requestDTO.duration());
 
         CertificateReturnDTO returnDTO = certificateService.saveGiftCertificate(giftCertificate, requestDTO.tagIds());
 
-        return ResponseEntity.status(CREATED).body(returnDTO);
+        EntityModel<CertificateReturnDTO> resource = EntityModel.of(returnDTO);
+        resource.add(linkTo(methodOn(CertificatesController.class)
+            .getCertificate(returnDTO.certificateId())).withSelfRel());
+
+        return ResponseEntity.status(CREATED).body(resource);
     }
 
-    /**
-     * Retrieves a gift certificate by its ID.
-     *
-     * @param id The unique identifier of the gift certificate to be retrieved.
-     * @return ResponseEntity<?> A response entity containing the gift certificate with the given ID.
-     * if certificate exists, returns Response Entity with giftCertificate
-     * if not, returns not found and error
-     * @GetMapping This annotation maps HTTP GET requests onto this method.
-     * @value "/certificate/{id}" The path where this method is mapped. It includes a path variable 'id'.
-     * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
-     * @produces {"application/json"} Specifies that this method returns data in application/json format.
-     */
-    @GetMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
-    ResponseEntity<?> getCertificate(@PathVariable long id) {
-        return ResponseEntity.status(OK).body(certificateService.getGiftCertificate(id));
+    @GetMapping("/{id}")
+    public ResponseEntity<EntityModel<CertificateReturnDTO>> getCertificate(@PathVariable long id) {
+        CertificateReturnDTO certificateDTO = certificateService.getGiftCertificate(id);
+        EntityModel<CertificateReturnDTO> resource = EntityModel.of(certificateDTO);
+        resource.add(linkTo(methodOn(CertificatesController.class)
+            .getCertificate(id)).withSelfRel());
+
+        return ResponseEntity.status(OK).body(resource);
     }
 
-    /**
-     * Retrieves gift certificates based on various filter criteria.
-     *
-     * @param tagName The name of the tag to filter the gift certificates.
-     * @param searchWord The word to search in the gift certificates.
-     * @param nameOrder The order in which to sort the gift certificates by name.
-     * @param createDateOrder The order in which to sort the gift certificates by creation date.
-     * @return ResponseEntity<?> A response entity containing the filtered and sorted gift certificates.
-     *
-     * @GetMapping This annotation maps HTTP GET requests onto this method.
-     * @value "/certificate/" The path where this method is mapped.
-     * produces {"application/json"} Specifies that this method returns data in application/json format.
-     */
-    @GetMapping(consumes = {"application/json"}, produces = {"application/json"})
-    public ResponseEntity<?> getFilteredCertificates(
-            @RequestParam(required = false) List<String> tagName,
-            @RequestParam(required = false) String searchWord,
-            @RequestParam(required = false) String nameOrder,
-            @RequestParam(required = false) String createDateOrder) {
+    @GetMapping
+    public ResponseEntity<PagedModel<EntityModel<CertificateReturnDTO>>> getFilteredCertificates(
+        @RequestParam(required = false) List<String> tagName,
+        @RequestParam(required = false) String searchWord,
+        Pageable pageable,
+        PagedResourcesAssembler<CertificateReturnDTO> assembler) {
 
-        List<CertificateReturnDTO> returnCertificate = certificateService.getFilteredCertificates(
-            tagName,
-            searchWord,
-            nameOrder,
-            createDateOrder);
+        Page<CertificateReturnDTO> certificatesPage =
+            certificateService.getFilteredCertificates(tagName, searchWord, pageable);
 
-        return ResponseEntity.status(OK).body(returnCertificate);
+        return ResponseEntity.ok(assembler.toModel(certificatesPage,
+            cert -> EntityModel.of(cert,
+                linkTo(methodOn(CertificatesController.class).getCertificate(cert.certificateId())).withSelfRel())));
     }
 
-    /**
-     * Deletes a gift certificate by its ID.
-     *
-     * @param id The unique identifier of the gift certificate to be deleted.
-     * @return ResponseEntity<?> A response entity representing the result of the deletion operation.
-     * If deleted, returns FOUND
-     * if not deleted, returns NO CONTENT with a body-containing message and code
-     * <p>
-     * DeleteMapping This annotation maps HTTP DELETE requests onto this method.
-     * Value "/certificate/{id}" The path where this method is mapped.
-     * It includes a path variable 'id'.
-     * Consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
-     * Produces {"application/json"} Specifies that this method returns data in application/json format.
-     */
-    @DeleteMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
-    ResponseEntity<?> deleteCertificate(@PathVariable long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCertificate(@PathVariable long id) {
         certificateService.deleteGiftCertificate(id);
         return ResponseEntity.status(NO_CONTENT).build();
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<?> updateCertificate(@PathVariable Long id, @RequestBody CertificateRequestDTO requestDTO){
-        CertificateReturnDTO returnCertificate = certificateService.updateGiftCertificate(id, new GiftCertificate(
-                requestDTO.name(),
+    public ResponseEntity<EntityModel<CertificateReturnDTO>> updateCertificate(@PathVariable Long id,
+        @RequestBody CertificateRequestDTO requestDTO){
+        CertificateReturnDTO returnCertificate = certificateService.updateGiftCertificate(id,
+            new GiftCertificate(requestDTO.name(),
                 requestDTO.description(),
                 requestDTO.price(),
-                requestDTO.duration()), requestDTO.tagIds());
-        return ResponseEntity.status(OK).body(returnCertificate);
+                requestDTO.duration()),
+            requestDTO.tagIds());
+
+        EntityModel<CertificateReturnDTO> resource = EntityModel.of(returnCertificate);
+        resource.add(linkTo(methodOn(CertificatesController.class).getCertificate(id)).withSelfRel());
+
+        return ResponseEntity.status(OK).body(resource);
     }
 }

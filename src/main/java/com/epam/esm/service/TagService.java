@@ -13,6 +13,8 @@ import com.epam.esm.repository.TagRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -48,19 +50,16 @@ public class TagService {
         }
     }
 
-    /**
-     *
-     * @param tagId unique tag id
-     * @return if tag is retrieved, returns tag
-     * if not, returns not found
-     */
-    public TagReturnDTO getTag(long tagId) {
+    public Page<TagReturnDTO> getAllTags(Pageable pageable) {
         try {
-            Tag tag = tagRepository.findById(tagId)
-                .orElseThrow(() -> new CustomizedException(TAG_ID_NOT_FOUND.formatted(tagId), ErrorCode.TAG_INTERNAL_SERVER_ERROR));
-            return convertTagToTagReturnDTO(tag);
+            return tagRepository.findAll(pageable)
+                .map(this::convertTagToTagReturnDTO);
+
         } catch (DataAccessException ex) {
-            throw new CustomizedException("Database access error while retrieving tag with id" + tagId, ErrorCode.TAG_DATABASE_ERROR, ex);
+            throw new CustomizedException("Failed to fetch tags from the database", ErrorCode.TAG_DATABASE_ERROR, ex);
+        }
+        catch (Exception ex) {
+            throw new CustomizedException("Unexpected error occurred", ErrorCode.TAG_DATABASE_ERROR, ex);
         }
     }
 

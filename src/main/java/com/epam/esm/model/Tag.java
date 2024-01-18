@@ -24,8 +24,10 @@ public class Tag{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "tag_id")
-    public Long id;
+    private Long id;
 
+    @Getter
     @Column(name = "tag_name")
-    public String name;
+    private String name;
+
 }

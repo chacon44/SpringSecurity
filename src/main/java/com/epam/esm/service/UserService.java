@@ -6,10 +6,16 @@ import com.epam.esm.dto.UserDTO;
 import com.epam.esm.dto.UserReturnDTO;
 import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
+import com.epam.esm.model.Tag;
+import com.epam.esm.model.User;
 import com.epam.esm.repository.UserRepository;
-import java.util.List;
+import java.util.Comparator;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,11 +27,10 @@ public class UserService {
     this.userRepository = userRepository;
   }
 
-  public List<UserDTO> getAllUsers() {
+  public Page<UserDTO> getAllUsers(Pageable pageable) {
     try {
-      return userRepository.findAll().stream()
-          .map(user -> new UserDTO(user.getId(), user.getName()))
-          .collect(Collectors.toList());
+      Page<User> userPage = userRepository.findAll(pageable);
+      return userPage.map(user -> new UserDTO(user.getId(), user.getName()));
     } catch (DataAccessException ex) {
       throw new CustomizedException("Error retrieving all users", ErrorCode.USER_DATABASE_ERROR, ex);
     }
@@ -41,9 +46,13 @@ public class UserService {
     }
   }
 
-  //TODO create single class to handle exceptions for jpa.
-  // Controller advice class data access exceptions like in mode
-  //TODO make description of exceptions
-  //TODO implement try catch data
+  public Optional<Entry<String, Long>> getUserMostUsedTag() {
+    User userWithHighestCost = userRepository.findUserWithHighestOrdersCost()
+        .orElseThrow(() -> new RuntimeException("Couldn't find any user"));
 
+    return userWithHighestCost.getOrders().stream()
+        .flatMap(order -> order.getCertificate().getTags().stream())
+        .collect(Collectors.groupingBy(Tag::getName, Collectors.counting()))
+        .entrySet().stream().min(Entry.comparingByValue(Comparator.reverseOrder()));
+  }
 }
