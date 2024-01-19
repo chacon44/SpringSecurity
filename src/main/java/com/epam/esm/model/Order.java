@@ -49,7 +49,6 @@ public class Order {
   @Column(name = "purchase_time", nullable = false)
   private LocalDateTime purchaseTime;
 
-
   public Order(User user, GiftCertificate certificate, Double price, LocalDateTime purchaseTime) {
     this.user = user;
     this.certificate = certificate;

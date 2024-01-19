@@ -5,7 +5,7 @@ import static com.epam.esm.exceptions.Messages.TAG_ALREADY_EXISTS;
 import static com.epam.esm.exceptions.Messages.TAG_CANNOT_BE_SAVED;
 import static com.epam.esm.exceptions.Messages.TAG_ID_NOT_FOUND;
 
-import com.epam.esm.dto.TagReturnDTO;
+import com.epam.esm.dto.TagResponseDTO;
 import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
 import com.epam.esm.model.Tag;
@@ -28,7 +28,8 @@ public class TagService {
         this.tagRepository = tagRepository;
     }
 
-    public TagReturnDTO saveTag(String tagName) {
+
+    public TagResponseDTO saveTag(String tagName) {
 
         if (tagName == null || tagName.isEmpty()) {
             throw new CustomizedException(NOT_VALID_TAG_REQUEST, ErrorCode.TAG_BAD_REQUEST);
@@ -50,7 +51,7 @@ public class TagService {
         }
     }
 
-    public Page<TagReturnDTO> getAllTags(Pageable pageable) {
+    public Page<TagResponseDTO> getAllTags(Pageable pageable) {
         try {
             return tagRepository.findAll(pageable)
                 .map(this::convertTagToTagReturnDTO);
@@ -74,7 +75,7 @@ public class TagService {
         }
     }
 
-    private TagReturnDTO convertTagToTagReturnDTO(Tag tag) {
-        return new TagReturnDTO(tag.getId(), tag.getName());
+    private TagResponseDTO convertTagToTagReturnDTO(Tag tag) {
+        return new TagResponseDTO(tag.getId(), tag.getName());
     }
 }

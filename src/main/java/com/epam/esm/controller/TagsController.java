@@ -3,10 +3,9 @@ package com.epam.esm.controller;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
-import static org.springframework.http.HttpStatus.OK;
 
 import com.epam.esm.dto.TagRequestDTO;
-import com.epam.esm.dto.TagReturnDTO;
+import com.epam.esm.dto.TagResponseDTO;
 import com.epam.esm.service.TagService;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,23 +27,24 @@ public class TagsController {
     private TagService tagService;
 
     @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
-    public ResponseEntity<EntityModel<TagReturnDTO>> postTag(@RequestBody TagRequestDTO requestDTO) {
-        TagReturnDTO tagDTO = tagService.saveTag(requestDTO.name());
+    public ResponseEntity<EntityModel<TagResponseDTO>> postTag(@RequestBody TagRequestDTO requestDTO) {
+        TagResponseDTO tagDTO = tagService.saveTag(requestDTO.name());
 
-        EntityModel<TagReturnDTO> resource = EntityModel.of(tagDTO);
+        EntityModel<TagResponseDTO> resource = EntityModel.of(tagDTO);
         resource.add(linkTo(TagsController.class).slash(tagDTO.id()).withSelfRel());
 
         return ResponseEntity.status(CREATED).body(resource);
     }
 
+    //Links to next page
     @GetMapping
-    public ResponseEntity<PagedModel<EntityModel<TagReturnDTO>>> getAllTags(
+    public ResponseEntity<PagedModel<EntityModel<TagResponseDTO>>> getAllTags(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "id") String sort) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
-        Page<TagReturnDTO> tagDTOPage = tagService.getAllTags(pageable);
+        Page<TagResponseDTO> tagDTOPage = tagService.getAllTags(pageable);
 
         PagedModel.PageMetadata pageMetadata = new PagedModel.PageMetadata(
             tagDTOPage.getSize(),
@@ -52,12 +52,12 @@ public class TagsController {
             tagDTOPage.getTotalElements(),
             tagDTOPage.getTotalPages());
 
-        List<EntityModel<TagReturnDTO>> tagResources = tagDTOPage.getContent().stream()
+        List<EntityModel<TagResponseDTO>> tagResources = tagDTOPage.getContent().stream()
             .map(tagDTO -> EntityModel.of(tagDTO,
                 linkTo(TagsController.class).slash(tagDTO.id()).withSelfRel()))
             .collect(Collectors.toList());
 
-        PagedModel<EntityModel<TagReturnDTO>> pagedModel = PagedModel.of(tagResources, pageMetadata);
+        PagedModel<EntityModel<TagResponseDTO>> pagedModel = PagedModel.of(tagResources, pageMetadata);
 
         return ResponseEntity.ok(pagedModel);
     }

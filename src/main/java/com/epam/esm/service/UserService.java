@@ -6,7 +6,7 @@ import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 
 import com.epam.esm.dto.UserDTO;
-import com.epam.esm.dto.UserReturnDTO;
+import com.epam.esm.dto.UserResponseDTO;
 import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
 import com.epam.esm.model.Tag;
@@ -37,10 +37,10 @@ public class UserService {
     }
   }
 
-  public UserReturnDTO getUser(Long userId) {
+  public UserResponseDTO getUser(Long userId) {
     try {
       return userRepository.findById(userId)
-          .map(user -> new UserReturnDTO(user.getId(), user.getName()))
+          .map(user -> new UserResponseDTO(user.getId(), user.getName()))
           .orElseThrow(() -> new CustomizedException(USER_ID_NOT_FOUND.formatted(userId), ErrorCode.USER_NOT_FOUND));
     } catch (DataAccessException ex) {
       throw new CustomizedException("Error retrieving user with id " + userId, ErrorCode.USER_DATABASE_ERROR, ex);
@@ -58,6 +58,7 @@ public class UserService {
 
   private Optional<Entry<String, Long>> getMostUsedTagFromUser(User user) {
     try {
+      //query
       return user.getOrders().stream() // for each order of that user
           .flatMap(order -> order
               .getCertificate().getTags().stream()) //get all tags from the purchased certificate

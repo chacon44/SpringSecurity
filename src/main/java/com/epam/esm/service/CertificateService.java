@@ -6,7 +6,7 @@ import static com.epam.esm.exceptions.Messages.CERTIFICATE_WITH_ID_NOT_FOUND;
 import static java.lang.Double.isInfinite;
 import static java.lang.Double.isNaN;
 
-import com.epam.esm.dto.CertificateReturnDTO;
+import com.epam.esm.dto.CertificateResponseDTO;
 import com.epam.esm.dto.errors.ErrorDTO;
 import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
@@ -42,7 +42,7 @@ public class CertificateService {
         this.tagRepository = tagRepository;
     }
 
-    public CertificateReturnDTO saveGiftCertificate(@NonNull GiftCertificate giftCertificate, List<Long> tagIdsList) {
+    public CertificateResponseDTO saveGiftCertificate(@NonNull GiftCertificate giftCertificate, List<Long> tagIdsList) {
         try {
             Optional<ErrorDTO> requestValidationMessage = validateCertificateRequest(giftCertificate, tagIdsList);
             if (requestValidationMessage.isPresent())
@@ -67,7 +67,7 @@ public class CertificateService {
         }
     }
 
-    public CertificateReturnDTO getGiftCertificate(@NonNull Long giftCertificateId) {
+    public CertificateResponseDTO getGiftCertificate(@NonNull Long giftCertificateId) {
         try {
             Optional<GiftCertificate> giftCertificate = certificateRepository.findById(giftCertificateId);
 
@@ -83,7 +83,7 @@ public class CertificateService {
         }
     }
 
-    public Page<CertificateReturnDTO> getFilteredCertificates(
+    public Page<CertificateResponseDTO> getFilteredCertificates(
         List<String> tagNames,
         String searchWord,
         Pageable pageable) {
@@ -97,6 +97,8 @@ public class CertificateService {
         }
     }
 
+    //TODO apply transactional
+    @Transactional
     public void deleteGiftCertificate(Long certificateId) {
 
         if(!certificateRepository.existsById(certificateId)){
@@ -109,7 +111,7 @@ public class CertificateService {
         }
     }
     @Transactional
-    public CertificateReturnDTO updateGiftCertificate(@NonNull Long certificateId, GiftCertificate updates, List<Long> newTagIdsList) {
+    public CertificateResponseDTO updateGiftCertificate(@NonNull Long certificateId, GiftCertificate updates, List<Long> newTagIdsList) {
 
         try {
             Optional<GiftCertificate> optCertificate = certificateRepository.findById(
@@ -206,14 +208,14 @@ public class CertificateService {
         }
     }
 
-    public CertificateReturnDTO convertToCertificateDTO(GiftCertificate certificate) {
+    public CertificateResponseDTO convertToCertificateDTO(GiftCertificate certificate) {
 
         List<Long> tagIds = certificate.getTags().stream()
             .map(Tag::getId)
             .collect(Collectors.toList());
 
 
-        return new CertificateReturnDTO(certificate.getId(),
+        return new CertificateResponseDTO(certificate.getId(),
             certificate.getName(),
             certificate.getDescription(),
             certificate.getPrice(),

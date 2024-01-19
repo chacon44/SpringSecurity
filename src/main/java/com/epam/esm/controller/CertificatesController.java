@@ -7,7 +7,7 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 
 import com.epam.esm.dto.CertificateRequestDTO;
-import com.epam.esm.dto.CertificateReturnDTO;
+import com.epam.esm.dto.CertificateResponseDTO;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.service.CertificateService;
 import java.util.List;
@@ -36,16 +36,16 @@ public class CertificatesController {
     private CertificateService certificateService;
 
     @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
-    public ResponseEntity<EntityModel<CertificateReturnDTO>> postCertificate(@RequestBody CertificateRequestDTO requestDTO) {
+    public ResponseEntity<EntityModel<CertificateResponseDTO>> postCertificate(@RequestBody CertificateRequestDTO requestDTO) {
         GiftCertificate giftCertificate = new GiftCertificate(
             requestDTO.name(),
             requestDTO.description(),
             requestDTO.price(),
             requestDTO.duration());
 
-        CertificateReturnDTO returnDTO = certificateService.saveGiftCertificate(giftCertificate, requestDTO.tagIds());
+        CertificateResponseDTO returnDTO = certificateService.saveGiftCertificate(giftCertificate, requestDTO.tagIds());
 
-        EntityModel<CertificateReturnDTO> resource = EntityModel.of(returnDTO);
+        EntityModel<CertificateResponseDTO> resource = EntityModel.of(returnDTO);
         resource.add(linkTo(methodOn(CertificatesController.class)
             .getCertificate(returnDTO.certificateId())).withSelfRel());
 
@@ -53,9 +53,9 @@ public class CertificatesController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EntityModel<CertificateReturnDTO>> getCertificate(@PathVariable long id) {
-        CertificateReturnDTO certificateDTO = certificateService.getGiftCertificate(id);
-        EntityModel<CertificateReturnDTO> resource = EntityModel.of(certificateDTO);
+    public ResponseEntity<EntityModel<CertificateResponseDTO>> getCertificate(@PathVariable long id) {
+        CertificateResponseDTO certificateDTO = certificateService.getGiftCertificate(id);
+        EntityModel<CertificateResponseDTO> resource = EntityModel.of(certificateDTO);
         resource.add(linkTo(methodOn(CertificatesController.class)
             .getCertificate(id)).withSelfRel());
 
@@ -63,13 +63,13 @@ public class CertificatesController {
     }
 
     @GetMapping
-    public ResponseEntity<PagedModel<EntityModel<CertificateReturnDTO>>> getFilteredCertificates(
+    public ResponseEntity<PagedModel<EntityModel<CertificateResponseDTO>>> getFilteredCertificates(
         @RequestParam(required = false) List<String> tagName,
         @RequestParam(required = false) String searchWord,
         Pageable pageable,
-        PagedResourcesAssembler<CertificateReturnDTO> assembler) {
+        PagedResourcesAssembler<CertificateResponseDTO> assembler) {
 
-        Page<CertificateReturnDTO> certificatesPage =
+        Page<CertificateResponseDTO> certificatesPage =
             certificateService.getFilteredCertificates(tagName, searchWord, pageable);
 
         return ResponseEntity.ok(assembler.toModel(certificatesPage,
@@ -84,16 +84,16 @@ public class CertificatesController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<EntityModel<CertificateReturnDTO>> updateCertificate(@PathVariable Long id,
+    public ResponseEntity<EntityModel<CertificateResponseDTO>> updateCertificate(@PathVariable Long id,
         @RequestBody CertificateRequestDTO requestDTO){
-        CertificateReturnDTO returnCertificate = certificateService.updateGiftCertificate(id,
+        CertificateResponseDTO returnCertificate = certificateService.updateGiftCertificate(id,
             new GiftCertificate(requestDTO.name(),
                 requestDTO.description(),
                 requestDTO.price(),
                 requestDTO.duration()),
             requestDTO.tagIds());
 
-        EntityModel<CertificateReturnDTO> resource = EntityModel.of(returnCertificate);
+        EntityModel<CertificateResponseDTO> resource = EntityModel.of(returnCertificate);
         resource.add(linkTo(methodOn(CertificatesController.class).getCertificate(id)).withSelfRel());
 
         return ResponseEntity.status(OK).body(resource);

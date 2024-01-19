@@ -37,6 +37,9 @@ public class GenerationService {
   Faker faker = new Faker();
   Random random = new Random();
 
+  //TODO create endpoint for audit data. @PrePersist,
+  //TODO don't test generationservice
+
   public void deleteData() {
     try {
       orderRepository.deleteAll();
@@ -50,7 +53,6 @@ public class GenerationService {
 
   public void generateUsers(){
     try {
-
       IntStream.range(0, 1000)
           .mapToObj(i -> {
             User user = new User();
@@ -58,7 +60,7 @@ public class GenerationService {
             return user;
           })
           .forEach(userRepository::save);
-    }catch (DataAccessException ex) {
+    } catch (DataAccessException ex) {
       throw new CustomizedException("Error generating users", ErrorCode.DATABASE_ERROR, ex);
     }
   }

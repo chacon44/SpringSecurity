@@ -3,7 +3,7 @@ package com.epam.esm.controller;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 import com.epam.esm.dto.UserDTO;
-import com.epam.esm.dto.UserReturnDTO;
+import com.epam.esm.dto.UserResponseDTO;
 import com.epam.esm.service.UserService;
 import java.util.Map.Entry;
 import org.springframework.data.domain.Page;
@@ -40,9 +40,9 @@ public class UserController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<EntityModel<UserReturnDTO>> getUser(@PathVariable Long id) {
-    UserReturnDTO user = userService.getUser(id);
-    EntityModel<UserReturnDTO> resource = EntityModel.of(user);
+  public ResponseEntity<EntityModel<UserResponseDTO>> getUser(@PathVariable Long id) {
+    UserResponseDTO user = userService.getUser(id);
+    EntityModel<UserResponseDTO> resource = EntityModel.of(user);
     resource.add(linkTo(UserController.class).slash(user.id()).withSelfRel());
     return ResponseEntity.ok(resource);
   }
