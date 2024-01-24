@@ -3,7 +3,7 @@ package com.epam.esm.controller;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
-import com.epam.esm.dto.OrderDTO;
+import com.epam.esm.dto.OrderResponseDTO;
 import com.epam.esm.dto.OrderRequestDTO;
 import com.epam.esm.service.OrderService;
 import org.springframework.data.domain.Page;
@@ -30,38 +30,38 @@ public class OrderController {
   }
 
   @GetMapping
-  public ResponseEntity<PagedModel<EntityModel<OrderDTO>>> getAllOrders(Pageable pageable, PagedResourcesAssembler<OrderDTO> assembler) {
-    Page<OrderDTO> ordersPage = orderService.getAllOrders(pageable);
+  public ResponseEntity<PagedModel<EntityModel<OrderResponseDTO>>> getAllOrders(Pageable pageable, PagedResourcesAssembler<OrderResponseDTO> assembler) {
+    Page<OrderResponseDTO> ordersPage = orderService.getAllOrders(pageable);
     return ResponseEntity.ok(assembler.toModel(ordersPage,
-        orderDTO -> EntityModel.of(orderDTO,
-            linkTo(methodOn(OrderController.class).getOrder(orderDTO.orderId())).withSelfRel())));
+        orderResponseDTO -> EntityModel.of(orderResponseDTO,
+            linkTo(methodOn(OrderController.class).getOrder(orderResponseDTO.orderId())).withSelfRel())));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<EntityModel<OrderDTO>> getOrder(@PathVariable Long id) {
-    OrderDTO orderDTO = orderService.getOrder(id);
-    EntityModel<OrderDTO> resource = EntityModel.of(orderDTO);
+  public ResponseEntity<EntityModel<OrderResponseDTO>> getOrder(@PathVariable Long id) {
+    OrderResponseDTO orderResponseDTO = orderService.getOrder(id);
+    EntityModel<OrderResponseDTO> resource = EntityModel.of(orderResponseDTO);
     resource.add(linkTo(methodOn(OrderController.class).getOrder(id)).withSelfRel());
     return ResponseEntity.ok(resource);
   }
 
   @GetMapping(value = "/users/{userId}/orders", consumes = {"application/json"}, produces = {"application/json"})
-  public ResponseEntity<PagedModel<EntityModel<OrderDTO>>> getOrdersFromUser(
+  public ResponseEntity<PagedModel<EntityModel<OrderResponseDTO>>> getOrdersFromUser(
       @PathVariable Long userId,
       Pageable pageable,
-      PagedResourcesAssembler<OrderDTO> assembler) {
+      PagedResourcesAssembler<OrderResponseDTO> assembler) {
 
-    Page<OrderDTO> ordersPage = orderService.getOrdersByUserId(userId, pageable);
+    Page<OrderResponseDTO> ordersPage = orderService.getOrdersByUserId(userId, pageable);
     return ResponseEntity.ok(assembler.toModel(ordersPage,
-        orderDTO -> EntityModel.of(orderDTO,
-            linkTo(methodOn(OrderController.class).getOrder(orderDTO.orderId())).withSelfRel())));
+        orderResponseDTO -> EntityModel.of(orderResponseDTO,
+            linkTo(methodOn(OrderController.class).getOrder(orderResponseDTO.orderId())).withSelfRel())));
   }
 
   @PostMapping
-  public ResponseEntity<EntityModel<OrderDTO>> purchaseGiftCertificate(@RequestBody OrderRequestDTO orderRequestDto) {
-    OrderDTO orderDTO = orderService.purchaseGiftCertificate(orderRequestDto.userId(), orderRequestDto.certificateId());
-    EntityModel<OrderDTO> resource = EntityModel.of(orderDTO);
-    resource.add(linkTo(methodOn(OrderController.class).getOrder(orderDTO.orderId())).withSelfRel());
+  public ResponseEntity<EntityModel<OrderResponseDTO>> purchaseGiftCertificate(@RequestBody OrderRequestDTO orderRequestDto) {
+    OrderResponseDTO orderResponseDTO = orderService.purchaseGiftCertificate(orderRequestDto.userId(), orderRequestDto.certificateId());
+    EntityModel<OrderResponseDTO> resource = EntityModel.of(orderResponseDTO);
+    resource.add(linkTo(methodOn(OrderController.class).getOrder(orderResponseDTO.orderId())).withSelfRel());
     return ResponseEntity.ok(resource);
   }
 

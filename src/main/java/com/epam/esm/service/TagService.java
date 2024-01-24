@@ -10,6 +10,7 @@ import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
 import com.epam.esm.model.Tag;
 import com.epam.esm.repository.TagRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -28,22 +29,22 @@ public class TagService {
         this.tagRepository = tagRepository;
     }
 
-
+    @Transactional
     public TagResponseDTO saveTag(String tagName) {
-
         if (tagName == null || tagName.isEmpty()) {
             throw new CustomizedException(NOT_VALID_TAG_REQUEST, ErrorCode.TAG_BAD_REQUEST);
         }
 
+        try {
         tagRepository.findByName(tagName)
             .ifPresent(tag -> {
-                throw new CustomizedException(TAG_ALREADY_EXISTS.formatted(tag.getId()), ErrorCode.TAG_BAD_REQUEST);
+                throw new CustomizedException(TAG_ALREADY_EXISTS.formatted(tag.getId()), ErrorCode.TAG_ALREADY_EXISTS);
             });
 
         Tag tag = new Tag();
         tag.setName(tagName);
 
-        try {
+
             Tag savedTag = tagRepository.save(tag);
             return convertTagToTagReturnDTO(savedTag);
         }catch (DataAccessException ex){
@@ -59,11 +60,8 @@ public class TagService {
         } catch (DataAccessException ex) {
             throw new CustomizedException("Failed to fetch tags from the database", ErrorCode.TAG_DATABASE_ERROR, ex);
         }
-        catch (Exception ex) {
-            throw new CustomizedException("Unexpected error occurred", ErrorCode.TAG_DATABASE_ERROR, ex);
-        }
     }
-
+    @Transactional
     public void deleteTag(long tagId) {
         if (!tagRepository.existsById(tagId)) {
             throw new CustomizedException(TAG_ID_NOT_FOUND.formatted(tagId), ErrorCode.TAG_NOT_FOUND);

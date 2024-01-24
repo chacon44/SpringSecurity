@@ -91,9 +91,11 @@ public class GenerationService {
     try{
     GiftCertificate certificate = new GiftCertificate();
 
-    for (int i = 0; i < 5000; i++) {
+      List<Tag> tags = tagRepository.findAll();
 
-      certificateCreation(certificate);
+      for (int i = 0; i < 5000; i++) {
+
+      certificateCreation(certificate, tags);
       giftCertificateRepository.save(certificate);
     }
     }catch (DataAccessException ex) {
@@ -101,19 +103,18 @@ public class GenerationService {
   }
   }
 
-  private void certificateCreation(GiftCertificate certificate) {
+  private void certificateCreation(GiftCertificate certificate, List<Tag> tags) {
     nameAssignation(certificate);
     descriptionAssignation(certificate);
     priceAssignation(certificate);
     durationAssignation(certificate);
     dateAssignation(certificate);
-    tagsAssignation(certificate);
+    tagsAssignation(certificate, tags);
   }
 
-  private void tagsAssignation(GiftCertificate certificate) {
+  private void tagsAssignation(GiftCertificate certificate, List<Tag> tags) {
     try {
 
-      List<Tag> tags = tagRepository.findAll();
       List<Tag> certificateTags = new ArrayList<>();
 
       assignRandomTags(tags, random, certificateTags);

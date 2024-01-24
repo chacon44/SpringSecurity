@@ -3,9 +3,7 @@ package com.epam.esm.controller;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 import com.epam.esm.dto.UserDTO;
-import com.epam.esm.dto.UserResponseDTO;
 import com.epam.esm.service.UserService;
-import java.util.Map.Entry;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
@@ -33,16 +31,16 @@ public class UserController {
   }
 
   @GetMapping("/most-used-tag-of-user-with-highest-cost")
-  public ResponseEntity<Entry<String, Long>> getMostUsedTagOfUserWithHighestCost() {
+  public ResponseEntity<String> getMostUsedTagOfUserWithHighestCost() {
     return userService.getUserMostUsedTag()
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.notFound().build());
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<EntityModel<UserResponseDTO>> getUser(@PathVariable Long id) {
-    UserResponseDTO user = userService.getUser(id);
-    EntityModel<UserResponseDTO> resource = EntityModel.of(user);
+  public ResponseEntity<EntityModel<UserDTO>> getUser(@PathVariable Long id) {
+    UserDTO user = userService.getUser(id);
+    EntityModel<UserDTO> resource = EntityModel.of(user);
     resource.add(linkTo(UserController.class).slash(user.id()).withSelfRel());
     return ResponseEntity.ok(resource);
   }

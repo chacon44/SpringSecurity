@@ -36,7 +36,6 @@ public class TagsController {
         return ResponseEntity.status(CREATED).body(resource);
     }
 
-    //Links to next page
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<TagResponseDTO>>> getAllTags(
         @RequestParam(defaultValue = "0") int page,

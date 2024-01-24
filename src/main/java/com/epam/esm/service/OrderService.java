@@ -2,7 +2,7 @@ package com.epam.esm.service;
 
 
 import com.epam.esm.dto.CertificateDTO;
-import com.epam.esm.dto.OrderDTO;
+import com.epam.esm.dto.OrderResponseDTO;
 import com.epam.esm.dto.UserDTO;
 import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
@@ -36,13 +36,13 @@ public class OrderService {
     this.certificateRepository = certificateRepository;
   }
 
-  public Page<OrderDTO> getAllOrders(Pageable pageable) {
+  public Page<OrderResponseDTO> getAllOrders(Pageable pageable) {
     try {
       Page<Order> ordersPage = orderRepository.findAll(pageable);
 
       return ordersPage.map(order -> {
         try {
-          return new OrderDTO(
+          return new OrderResponseDTO(
               order.getId(),
               mapToUserDTO(order.getUser()),
               mapToCertificateDTO(order.getCertificate()),
@@ -57,27 +57,32 @@ public class OrderService {
       throw new CustomizedException("Database error while getting all orders", ErrorCode.ORDER_DATABASE_ERROR, ex);
     }
   }
-  public Page<OrderDTO> getOrdersByUserId(Long userId, Pageable pageable) {
+  public Page<OrderResponseDTO> getOrdersByUserId(Long userId, Pageable pageable) {
     try {
       Page<Order> ordersPage = orderRepository.findAllByUserId(userId, pageable);
-      return ordersPage.map(this::convertToOrderDTO);
+      try {
+        return ordersPage.map(this::convertToOrderDTO);
+      } catch (Exception ex) {
+        throw new CustomizedException("Error while converting order to OrderDTO",
+            ErrorCode.ORDER_CONVERSION_ERROR, ex);
+      }
     } catch (DataAccessException ex) {
       throw new CustomizedException("Database error while retrieving orders for user id:" + userId, ErrorCode.ORDER_DATABASE_ERROR, ex);
     }
   }
-  public OrderDTO getOrder(Long id) {
+  public OrderResponseDTO getOrder(Long id) {
     try {
       Optional<Order> optionalOrder = orderRepository.findById(id);
 
       if (optionalOrder.isPresent()) {
         Order order = optionalOrder.get();
-        return new OrderDTO(
-            order.getId(),
-            mapToUserDTO(order.getUser()),
-            mapToCertificateDTO(order.getCertificate()),
-            order.getPrice(),
-            order.getPurchaseTime()
-        );
+        try {
+          return convertToOrderDTO(order);
+        } catch (Exception ex) {
+          throw new CustomizedException("Error while converting order to OrderDTO",
+              ErrorCode.ORDER_CONVERSION_ERROR, ex);
+        }
+
       } else {
         throw new CustomizedException("Order with id " + id + " not found", ErrorCode.ORDER_NOT_FOUND);
       }
@@ -87,54 +92,50 @@ public class OrderService {
   }
 
   @Transactional
-  public OrderDTO purchaseGiftCertificate(Long userId, Long certificateId) {
-    Object[] objects = getUserAndCertificateIfExist(userId, certificateId);
-    if (objects[1] == null) {
-      String notFoundEntity = objects[0] != null ? "Certificate with ID " + certificateId + " not found." : "User with id " + userId + " not found";
-      throw new CustomizedException(notFoundEntity, ErrorCode.ORDER_BAD_REQUEST);
-    }
+  private User getUser(Long userId) {
+    return userRepository.findById(userId)
+        .orElseThrow(() -> new CustomizedException("User with id " + userId + " not found.", ErrorCode.USER_NOT_FOUND));
+  }
 
-    User user = (User) objects[0];
+  private GiftCertificate getCertificate(Long certificateId) {
+    return certificateRepository.findById(certificateId)
+        .orElseThrow(() -> new CustomizedException("Certificate with ID " + certificateId + " not found.", ErrorCode.CERTIFICATE_NOT_FOUND));
+  }
+
+  @Transactional
+  public OrderResponseDTO purchaseGiftCertificate(Long userId, Long certificateId) {
+
+    User user = getUser(userId);
+    GiftCertificate certificate = getCertificate(certificateId);
+
     UserDTO userDTO = new UserDTO(user.getId(), user.getName());
-
-    GiftCertificate certificate = (GiftCertificate) objects[1];
     List<Long> tagIds = certificate.getTags().stream().map(Tag::getId).collect(Collectors.toList());
-    CertificateDTO certificateDTO = new CertificateDTO(certificate.getId(), certificate.getName(), certificate.getDescription(),
-        certificate.getPrice(), certificate.getDuration(), tagIds);
+    CertificateDTO certificateDTO = new CertificateDTO(certificate.getId(), certificate.getName(),
+        certificate.getDescription(), certificate.getPrice(), certificate.getDuration(), tagIds);
 
     Order order = new Order(user, certificate, certificate.getPrice(), LocalDateTime.now());
     Order savedOrder = orderRepository.save(order);
 
-    return new OrderDTO(savedOrder.getId(), userDTO, certificateDTO, savedOrder.getPrice(), savedOrder.getPurchaseTime());
+    return new OrderResponseDTO(savedOrder.getId(), userDTO, certificateDTO, savedOrder.getPrice(),
+        savedOrder.getPurchaseTime());
   }
 
-  private Object[] getUserAndCertificateIfExist(Long userId, Long certificateId){
-    User user = userRepository.findById(userId).orElse(null);
-    if(user == null) return new Object[] {null};
-
-    GiftCertificate certificate = certificateRepository.findById(certificateId).orElse(null);
-    if(certificate == null) return new Object[] {null, null};
-
-    return new Object[]{user, certificate};
-  }
   private UserDTO mapToUserDTO(User user) {
     return new UserDTO(user.getId(), user.getName());
   }
-  private OrderDTO convertToOrderDTO(Order order) {
-    User user = order.getUser();
-    UserDTO userDTO = new UserDTO(user.getId(), user.getName());
 
-    GiftCertificate certificate = order.getCertificate();
-
-    List<Long> tagIds = certificate.getTags().stream().map(Tag::getId).collect(Collectors.toList());
-    CertificateDTO certificateDTO = new CertificateDTO(certificate.getId(),
-        certificate.getName(), certificate.getDescription(), certificate.getPrice(),
-        certificate.getDuration(), tagIds);
-
-    return new OrderDTO(order.getId(), userDTO, certificateDTO, order.getPrice(), order.getPurchaseTime());
-  }
   private CertificateDTO mapToCertificateDTO(GiftCertificate certificate) {
     List<Long> tagIds = certificate.getTags().stream().map(Tag::getId).collect(Collectors.toList());
-    return new CertificateDTO(certificate.getId(), certificate.getName(), certificate.getDescription(), certificate.getPrice(), certificate.getDuration(), tagIds);
+    return new CertificateDTO(certificate.getId(), certificate.getName(),
+        certificate.getDescription(), certificate.getPrice(),
+        certificate.getDuration(), tagIds);
+  }
+
+  private OrderResponseDTO convertToOrderDTO(Order order) {
+    UserDTO userDTO = mapToUserDTO(order.getUser());
+    CertificateDTO certificateDTO = mapToCertificateDTO(order.getCertificate());
+
+    return new OrderResponseDTO(order.getId(), userDTO, certificateDTO,
+        order.getPrice(), order.getPurchaseTime());
   }
 }

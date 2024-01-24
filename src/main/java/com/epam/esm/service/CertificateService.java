@@ -41,7 +41,7 @@ public class CertificateService {
         this.certificateRepository = certificateRepository;
         this.tagRepository = tagRepository;
     }
-
+    @Transactional
     public CertificateResponseDTO saveGiftCertificate(@NonNull GiftCertificate giftCertificate, List<Long> tagIdsList) {
         try {
             Optional<ErrorDTO> requestValidationMessage = validateCertificateRequest(giftCertificate, tagIdsList);
@@ -51,7 +51,7 @@ public class CertificateService {
             Optional<GiftCertificate> tryToFindCertificate = certificateRepository.findByName(giftCertificate.getName());
 
             if (tryToFindCertificate.isEmpty()) {
-                List<Tag> tags = tagRepository.findAllByIdIn(tagIdsList);
+                List<Tag> tags = tagRepository.findAllById(tagIdsList);
                 giftCertificate.setTags(tags);
                 GiftCertificate savedGiftCertificate = certificateRepository.save(giftCertificate);
 
@@ -60,7 +60,7 @@ public class CertificateService {
                 GiftCertificate foundCertificate = tryToFindCertificate.get();
                 Long idFound = foundCertificate.getId();
 
-                throw new CustomizedException(CERTIFICATE_ALREADY_EXISTS.formatted(idFound), ErrorCode.CERTIFICATE_ALREADY_FOUND);
+                throw new CustomizedException(CERTIFICATE_ALREADY_EXISTS.formatted(idFound), ErrorCode.CERTIFICATE_ALREADY_EXISTS);
             }
         } catch (DataAccessException ex) {
             throw new CustomizedException("Database error while saving GiftCertificate", ErrorCode.CERTIFICATE_DATABASE_ERROR, ex);
@@ -97,7 +97,6 @@ public class CertificateService {
         }
     }
 
-    //TODO apply transactional
     @Transactional
     public void deleteGiftCertificate(Long certificateId) {
 
@@ -138,7 +137,7 @@ public class CertificateService {
                 existingCertificate.setDuration(updates.getDuration());
             }
             if (newTagIdsList != null) {
-                List<Tag> uniqueTags = tagRepository.findAllByIdIn(newTagIdsList);
+                List<Tag> uniqueTags = tagRepository.findAllById(newTagIdsList);
                 existingCertificate.setTags(uniqueTags);
             }
 
@@ -208,7 +207,7 @@ public class CertificateService {
         }
     }
 
-    public CertificateResponseDTO convertToCertificateDTO(GiftCertificate certificate) {
+    private CertificateResponseDTO convertToCertificateDTO(GiftCertificate certificate) {
 
         List<Long> tagIds = certificate.getTags().stream()
             .map(Tag::getId)
