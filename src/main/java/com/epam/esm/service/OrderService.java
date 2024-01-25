@@ -2,8 +2,8 @@ package com.epam.esm.service;
 
 
 import com.epam.esm.dto.CertificateDTO;
-import com.epam.esm.dto.OrderDTO;
 import com.epam.esm.dto.UserDTO;
+import com.epam.esm.dto.OrderDTO;
 import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
 import com.epam.esm.model.GiftCertificate;

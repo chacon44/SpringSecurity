@@ -7,9 +7,12 @@ import com.epam.esm.dto.OrderDTO;
 import com.epam.esm.dto.OrderRequestDTO;
 import com.epam.esm.service.OrderService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -30,11 +34,21 @@ public class OrderController {
   }
 
   @GetMapping
-  public ResponseEntity<PagedModel<EntityModel<OrderDTO>>> getAllOrders(Pageable pageable, PagedResourcesAssembler<OrderDTO> assembler) {
+  public ResponseEntity<PagedModel<EntityModel<OrderDTO>>> getAllOrders(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      @RequestParam(defaultValue = "id") String sort,
+      PagedResourcesAssembler<OrderDTO> assembler) {
+
+    Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
     Page<OrderDTO> ordersPage = orderService.getAllOrders(pageable);
+
+    Link selfLink = linkTo(methodOn(OrderController.class)
+        .getAllOrders(page, size, sort, assembler)).withSelfRel();
+
     return ResponseEntity.ok(assembler.toModel(ordersPage,
         orderDTO -> EntityModel.of(orderDTO,
-            linkTo(methodOn(OrderController.class).getOrder(orderDTO.orderId())).withSelfRel())));
+            linkTo(methodOn(OrderController.class).getOrder(orderDTO.orderId())).withSelfRel()), selfLink));
   }
 
   @GetMapping("/{id}")
@@ -48,13 +62,20 @@ public class OrderController {
   @GetMapping(value = "/users/{userId}/orders", consumes = {"application/json"}, produces = {"application/json"})
   public ResponseEntity<PagedModel<EntityModel<OrderDTO>>> getOrdersFromUser(
       @PathVariable Long userId,
-      Pageable pageable,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size,
+      @RequestParam(defaultValue = "id") String sort,
       PagedResourcesAssembler<OrderDTO> assembler) {
 
+    Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
     Page<OrderDTO> ordersPage = orderService.getOrdersByUserId(userId, pageable);
+
+    Link selfLink = linkTo(methodOn(OrderController.class)
+        .getOrdersFromUser(userId, page, size, sort, assembler)).withSelfRel();
+
     return ResponseEntity.ok(assembler.toModel(ordersPage,
         orderDTO -> EntityModel.of(orderDTO,
-            linkTo(methodOn(OrderController.class).getOrder(orderDTO.orderId())).withSelfRel())));
+            linkTo(methodOn(OrderController.class).getOrder(orderDTO.orderId())).withSelfRel()), selfLink));
   }
 
   @PostMapping

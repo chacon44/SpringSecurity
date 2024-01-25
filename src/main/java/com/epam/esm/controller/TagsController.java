@@ -3,17 +3,17 @@ package com.epam.esm.controller;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.OK;
 
 import com.epam.esm.dto.TagRequestDTO;
 import com.epam.esm.dto.TagResponseDTO;
 import com.epam.esm.service.TagService;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
@@ -36,30 +36,32 @@ public class TagsController {
         return ResponseEntity.status(CREATED).body(resource);
     }
 
-    //Links to next page
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<TagResponseDTO>>> getAllTags(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "id") String sort) {
+        @RequestParam(defaultValue = "id") String sort,
+        PagedResourcesAssembler<TagResponseDTO> assembler) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+
         Page<TagResponseDTO> tagDTOPage = tagService.getAllTags(pageable);
 
-        PagedModel.PageMetadata pageMetadata = new PagedModel.PageMetadata(
-            tagDTOPage.getSize(),
-            tagDTOPage.getNumber(),
-            tagDTOPage.getTotalElements(),
-            tagDTOPage.getTotalPages());
-
-        List<EntityModel<TagResponseDTO>> tagResources = tagDTOPage.getContent().stream()
-            .map(tagDTO -> EntityModel.of(tagDTO,
-                linkTo(TagsController.class).slash(tagDTO.id()).withSelfRel()))
-            .collect(Collectors.toList());
-
-        PagedModel<EntityModel<TagResponseDTO>> pagedModel = PagedModel.of(tagResources, pageMetadata);
+        PagedModel<EntityModel<TagResponseDTO>> pagedModel = assembler.toModel(tagDTOPage,
+            tagDTO -> EntityModel.of(tagDTO,
+                linkTo(TagsController.class).slash(tagDTO.id()).withSelfRel()));
 
         return ResponseEntity.ok(pagedModel);
+    }
+
+    @GetMapping(value = "/popular")
+    public ResponseEntity<EntityModel<TagResponseDTO>> getMostPopularTag(){
+        TagResponseDTO tagResponseDTO = tagService.getMostPopularTag();
+        EntityModel<TagResponseDTO> resource = EntityModel.of(tagResponseDTO);
+        resource.add(linkTo(methodOn(TagsController.class)
+            .getMostPopularTag()).withSelfRel());
+
+        return ResponseEntity.status(OK).body(resource);
     }
 
     @DeleteMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})

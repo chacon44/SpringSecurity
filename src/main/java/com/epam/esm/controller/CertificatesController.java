@@ -13,9 +13,12 @@ import com.epam.esm.service.CertificateService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -66,15 +69,21 @@ public class CertificatesController {
     public ResponseEntity<PagedModel<EntityModel<CertificateResponseDTO>>> getFilteredCertificates(
         @RequestParam(required = false) List<String> tagName,
         @RequestParam(required = false) String searchWord,
-        Pageable pageable,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "id") String sort,
         PagedResourcesAssembler<CertificateResponseDTO> assembler) {
 
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
         Page<CertificateResponseDTO> certificatesPage =
             certificateService.getFilteredCertificates(tagName, searchWord, pageable);
 
+        Link selfLink = linkTo(methodOn(CertificatesController.class).getFilteredCertificates(tagName,
+            searchWord, page, size, sort, assembler)).withSelfRel();
+
         return ResponseEntity.ok(assembler.toModel(certificatesPage,
             cert -> EntityModel.of(cert,
-                linkTo(methodOn(CertificatesController.class).getCertificate(cert.certificateId())).withSelfRel())));
+                linkTo(CertificatesController.class).slash(cert.certificateId()).withSelfRel()), selfLink));
     }
 
     @DeleteMapping("/{id}")

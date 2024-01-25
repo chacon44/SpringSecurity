@@ -26,8 +26,10 @@ public class GenerationService {
 
   @Autowired
   private TagRepository tagRepository;
+
   @Autowired
   private UserRepository userRepository;
+
   @Autowired
   private OrderRepository orderRepository;
 

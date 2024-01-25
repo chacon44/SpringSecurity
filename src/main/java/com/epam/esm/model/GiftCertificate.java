@@ -21,9 +21,7 @@ import lombok.*;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "certificates")
 public class GiftCertificate {

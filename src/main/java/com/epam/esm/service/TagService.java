@@ -10,6 +10,7 @@ import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
 import com.epam.esm.model.Tag;
 import com.epam.esm.repository.TagRepository;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -63,6 +64,20 @@ public class TagService {
             throw new CustomizedException("Unexpected error occurred", ErrorCode.TAG_DATABASE_ERROR, ex);
         }
     }
+
+    public TagResponseDTO getMostPopularTag(){
+        try {
+            Optional<Long> tagId = tagRepository.findMostPopularTagOfUserWithHighestTotalCostOfOrders();
+            if(tagId.isPresent()) {
+                Tag tag = tagRepository.getReferenceById(tagId.get());
+                return convertTagToTagReturnDTO(tag);
+            }
+            else return null;
+        } catch (DataAccessException ex) {
+            throw new CustomizedException("Database error during getting tag", ErrorCode.TAG_DATABASE_ERROR, ex);
+        }
+    }
+
 
     public void deleteTag(long tagId) {
         if (!tagRepository.existsById(tagId)) {
