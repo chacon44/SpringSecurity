@@ -11,17 +11,22 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.Audited;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
 @JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
+@Audited
 @Table(name = "orders")
 public class Order {
 
@@ -44,6 +49,16 @@ public class Order {
 
   @Column(name = "purchase_time", nullable = false)
   private LocalDateTime purchaseTime;
+
+  @Column(name = "create_date", updatable = false)
+  private String createDate;
+  @PrePersist
+  protected void onCreate() {
+    if (this.createDate == null) {
+      this.createDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+          .format(LocalDateTime.now(ZoneOffset.UTC));
+    }
+  }
 
   public Order(User user, GiftCertificate certificate, Double price, LocalDateTime purchaseTime) {
     this.user = user;

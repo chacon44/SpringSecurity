@@ -97,7 +97,6 @@ public class CertificateService {
         }
     }
 
-    //TODO apply transactional
     @Transactional
     public void deleteGiftCertificate(Long certificateId) {
 

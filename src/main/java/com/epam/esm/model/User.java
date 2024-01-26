@@ -11,12 +11,18 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.Audited;
 
 /**
  * Represents the user entity class mapped to "users" table in the database.
@@ -31,6 +37,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @JsonIdentityInfo(generator= ObjectIdGenerators.PropertyGenerator.class, property="id")
+@Audited
 @Table(name = "users")
 public class User {
 
@@ -42,6 +49,28 @@ public class User {
   @Setter
   @Column(name = "name")
   private String name;
+
+  @Column(name = "create_date", updatable = false)
+  private String createDate;
+
+  @Column(name = "last_update_date")
+  private String lastUpdateDate;
+
+  @PrePersist
+  protected void onCreate() {
+    if (this.createDate == null) {
+      this.createDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+          .format(LocalDateTime.now(ZoneOffset.UTC));
+    }
+    this.lastUpdateDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        .format(LocalDateTime.now(ZoneOffset.UTC));
+  }
+
+  @PreUpdate
+  protected void onUpdate() {
+    this.lastUpdateDate = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        .format(LocalDateTime.now(ZoneOffset.UTC));
+  }
 
   @JsonManagedReference
   @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)

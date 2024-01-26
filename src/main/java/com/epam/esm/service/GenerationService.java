@@ -39,7 +39,7 @@ public class GenerationService {
   Faker faker = new Faker();
   Random random = new Random();
 
-  //TODO create endpoint for audit data. @PrePersist,
+
   //TODO don't test generationservice
 
   public void deleteData() {
@@ -91,11 +91,10 @@ public class GenerationService {
 
   public void generateCertificates() {
     try{
-    GiftCertificate certificate = new GiftCertificate();
-
-    for (int i = 0; i < 5000; i++) {
-
-      certificateCreation(certificate);
+      List<Tag> tags = tagRepository.findAll();
+    for (int i = 0; i < 10; i++) {
+      GiftCertificate certificate = new GiftCertificate();
+      certificateCreation(certificate, tags);
       giftCertificateRepository.save(certificate);
     }
     }catch (DataAccessException ex) {
@@ -103,19 +102,18 @@ public class GenerationService {
   }
   }
 
-  private void certificateCreation(GiftCertificate certificate) {
+  private void certificateCreation(GiftCertificate certificate, List<Tag> tags) {
     nameAssignation(certificate);
     descriptionAssignation(certificate);
     priceAssignation(certificate);
     durationAssignation(certificate);
     dateAssignation(certificate);
-    tagsAssignation(certificate);
+    tagsAssignation(certificate, tags);
   }
 
-  private void tagsAssignation(GiftCertificate certificate) {
+  private void tagsAssignation(GiftCertificate certificate, List<Tag> tags) {
     try {
 
-      List<Tag> tags = tagRepository.findAll();
       List<Tag> certificateTags = new ArrayList<>();
 
       assignRandomTags(tags, random, certificateTags);
@@ -145,8 +143,11 @@ public class GenerationService {
     }
     return name;
   }
+
   private void durationAssignation(GiftCertificate certificate) {
-    certificate.setDuration(faker.number().randomNumber()); // Set random number as duration
+    certificate.setDuration(faker.number().numberBetween(10L, 101L));
+    //generating random duration between 10 and 100
+
   }
 
   private void priceAssignation(GiftCertificate certificate) {

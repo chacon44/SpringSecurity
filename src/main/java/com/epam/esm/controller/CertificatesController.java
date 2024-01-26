@@ -10,7 +10,13 @@ import com.epam.esm.dto.CertificateRequestDTO;
 import com.epam.esm.dto.CertificateResponseDTO;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.service.CertificateService;
+import jakarta.persistence.EntityManager;
+import java.util.ArrayList;
 import java.util.List;
+import org.hibernate.envers.AuditReader;
+import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.query.AuditEntity;
+import org.hibernate.envers.query.AuditQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +43,9 @@ public class CertificatesController {
 
     @Autowired
     private CertificateService certificateService;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<EntityModel<CertificateResponseDTO>> postCertificate(@RequestBody CertificateRequestDTO requestDTO) {
@@ -65,6 +74,26 @@ public class CertificatesController {
         return ResponseEntity.status(OK).body(resource);
     }
 
+    //TODO integration test. Test here audit, pagination, HATEOAS (verify the links) Create testing data by hand
+
+//    Post /certificates
+//    PATCH /certificates/1
+//    GET /certificates/1/revisions -> assert, that size of returned list is 2.
+    @GetMapping("/{id}/revisions")
+    public ResponseEntity getCertificateRevisions(@PathVariable long id) {
+        AuditReader reader = AuditReaderFactory.get(entityManager);
+        AuditQuery query = reader.createQuery().forRevisionsOfEntity(GiftCertificate.class, true, true);
+        query.addOrder(AuditEntity.revisionNumber().desc());
+        List <GiftCertificate> resultList = new ArrayList<>();
+
+        List <Number> revisionNumbers = reader.getRevisions(GiftCertificate.class, id);
+        for (Number rev : revisionNumbers) {
+            GiftCertificate auditedCertificate = reader.find(GiftCertificate.class, id, rev);
+            resultList.add(auditedCertificate);
+        }
+
+        return ResponseEntity.ok(resultList);
+    }
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<CertificateResponseDTO>>> getFilteredCertificates(
         @RequestParam(required = false) List<String> tagName,

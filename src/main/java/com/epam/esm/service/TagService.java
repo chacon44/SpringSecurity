@@ -67,7 +67,7 @@ public class TagService {
 
     public TagResponseDTO getMostPopularTag(){
         try {
-            Optional<Long> tagId = tagRepository.findMostPopularTagOfUserWithHighestTotalCostOfOrders();
+            Optional<Long> tagId = tagRepository.findMostUsedTagOfUserWithHighestTotalCostOfOrders();
             if(tagId.isPresent()) {
                 Tag tag = tagRepository.getReferenceById(tagId.get());
                 return convertTagToTagReturnDTO(tag);

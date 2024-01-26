@@ -26,6 +26,7 @@ public interface TagRepository extends JpaRepository<Tag, Long>{
 
   String ORDER_ID_SUBQUERY = "(SELECT o.certificate_id FROM orders o WHERE o.id IN ";
   //get certificate ids from the orders that meet the next condition
+
   String ORDER_IDS = "(SELECT ord.id FROM orders ord";
   //get every order ids from orders list
 
@@ -41,5 +42,5 @@ public interface TagRepository extends JpaRepository<Tag, Long>{
       GROUP_BY_USER_ORDER + " " + GROUP_AND_SORT_BY_TAG_COUNT;
 
   @Query(value= FINAL_QUERY, nativeQuery = true)
-  Optional<Long> findMostPopularTagOfUserWithHighestTotalCostOfOrders();
+  Optional<Long> findMostUsedTagOfUserWithHighestTotalCostOfOrders();
 }

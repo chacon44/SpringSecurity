@@ -5,7 +5,16 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import com.epam.esm.dto.UserDTO;
 import com.epam.esm.dto.UserResponseDTO;
+import com.epam.esm.model.User;
 import com.epam.esm.service.UserService;
+import jakarta.persistence.EntityManager;
+import java.util.ArrayList;
+import java.util.List;
+import org.hibernate.envers.AuditReader;
+import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.query.AuditEntity;
+import org.hibernate.envers.query.AuditQuery;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,8 +33,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-  private final UserService userService;
 
+  @Autowired
+  private UserService userService;
+
+  @Autowired
+  private EntityManager entityManager;
   public UserController(UserService userService) {
     this.userService = userService;
   }
@@ -52,5 +65,21 @@ public class UserController {
     EntityModel<UserResponseDTO> resource = EntityModel.of(user);
     resource.add(linkTo(UserController.class).slash(user.id()).withSelfRel());
     return ResponseEntity.ok(resource);
+  }
+
+  @GetMapping("/{id}/revisions")
+  public ResponseEntity getUserRevisions(@PathVariable long id) {
+    AuditReader reader = AuditReaderFactory.get(entityManager);
+    AuditQuery query = reader.createQuery().forRevisionsOfEntity(User.class, true, true);
+    query.addOrder(AuditEntity.revisionNumber().desc());
+    List<User> resultList = new ArrayList<>();
+
+    List <Number> revisionNumbers = reader.getRevisions(User.class, id);
+    for (Number rev : revisionNumbers) {
+      User auditedCertificate = reader.find(User.class, id, rev);
+      resultList.add(auditedCertificate);
+    }
+
+    return ResponseEntity.ok(resultList);
   }
 }

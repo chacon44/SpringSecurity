@@ -5,7 +5,16 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import com.epam.esm.dto.OrderDTO;
 import com.epam.esm.dto.OrderRequestDTO;
+import com.epam.esm.model.Order;
 import com.epam.esm.service.OrderService;
+import jakarta.persistence.EntityManager;
+import java.util.ArrayList;
+import java.util.List;
+import org.hibernate.envers.AuditReader;
+import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.query.AuditEntity;
+import org.hibernate.envers.query.AuditQuery;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +36,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/order")
 public class OrderController {
 
-  private final OrderService orderService;
+  @Autowired
+  private OrderService orderService;
+
+  @Autowired
+  private EntityManager entityManager;
 
   public OrderController(OrderService orderService) {
     this.orderService = orderService;
@@ -84,6 +97,22 @@ public class OrderController {
     EntityModel<OrderDTO> resource = EntityModel.of(orderDTO);
     resource.add(linkTo(methodOn(OrderController.class).getOrder(orderDTO.orderId())).withSelfRel());
     return ResponseEntity.ok(resource);
+  }
+
+  @GetMapping("/{id}/revisions")
+  public ResponseEntity getOrderRevisions(@PathVariable long id) {
+    AuditReader reader = AuditReaderFactory.get(entityManager);
+    AuditQuery query = reader.createQuery().forRevisionsOfEntity(Order.class, true, true);
+    query.addOrder(AuditEntity.revisionNumber().desc());
+    List<Order> resultList = new ArrayList<>();
+
+    List <Number> revisionNumbers = reader.getRevisions(Order.class, id);
+    for (Number rev : revisionNumbers) {
+      Order auditedCertificate = reader.find(Order.class, id, rev);
+      resultList.add(auditedCertificate);
+    }
+
+    return ResponseEntity.ok(resultList);
   }
 
 }

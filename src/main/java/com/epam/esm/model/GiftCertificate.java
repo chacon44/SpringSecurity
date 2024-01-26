@@ -18,11 +18,13 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import lombok.*;
+import org.hibernate.envers.Audited;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
+@Audited
 @Table(name = "certificates")
 public class GiftCertificate {
     @Id
