@@ -3,7 +3,7 @@ package com.epam.esm.controller;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
-import com.epam.esm.dto.OrderDTO;
+import com.epam.esm.dto.OrderResponseDTO;
 import com.epam.esm.dto.OrderRequestDTO;
 import com.epam.esm.model.Order;
 import com.epam.esm.service.OrderService;
@@ -46,59 +46,99 @@ public class OrderController {
     this.orderService = orderService;
   }
 
+  /**
+   * Processes the purchase of a Gift Certificate by a User.
+   *
+   * @param orderRequestDto Contains the ids of the User and the Gift Certificate.
+   * @return A ResponseEntity containing the OrderResponseDTO.
+   */
+  @PostMapping
+  public ResponseEntity<EntityModel<OrderResponseDTO>> purchaseGiftCertificate(@RequestBody OrderRequestDTO orderRequestDto) {
+    OrderResponseDTO OrderResponseDTO = orderService.purchaseGiftCertificate(orderRequestDto.userId(), orderRequestDto.certificateId());
+    EntityModel<OrderResponseDTO> resource = EntityModel.of(OrderResponseDTO);
+    resource.add(linkTo(methodOn(OrderController.class).getOrder(OrderResponseDTO.orderId())).withSelfRel());
+    return ResponseEntity.ok(resource);
+  }
+
+  /**
+   * Retrieves a pageable and sortable list of all orders.
+   *
+   * @param page The number of the page to retrieve.
+   * @param size The number of records in a page.
+   * @param sort The property to sort the results by.
+   * @param assembler Helps convert the Page into a PagedModel.
+   * @return A ResponseEntity containing a PagedModel of OrderResponseDTO.
+   */
   @GetMapping
-  public ResponseEntity<PagedModel<EntityModel<OrderDTO>>> getAllOrders(
+  public ResponseEntity<PagedModel<EntityModel<OrderResponseDTO>>> getAllOrders(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "id") String sort,
-      PagedResourcesAssembler<OrderDTO> assembler) {
+      PagedResourcesAssembler<OrderResponseDTO> assembler) {
 
     Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
-    Page<OrderDTO> ordersPage = orderService.getAllOrders(pageable);
+    Page<OrderResponseDTO> ordersPage = orderService.getAllOrders(pageable);
 
     Link selfLink = linkTo(methodOn(OrderController.class)
         .getAllOrders(page, size, sort, assembler)).withSelfRel();
 
     return ResponseEntity.ok(assembler.toModel(ordersPage,
-        orderDTO -> EntityModel.of(orderDTO,
-            linkTo(methodOn(OrderController.class).getOrder(orderDTO.orderId())).withSelfRel()), selfLink));
+        OrderResponseDTO -> EntityModel.of(OrderResponseDTO,
+            linkTo(methodOn(OrderController.class).getOrder(OrderResponseDTO.orderId())).withSelfRel()), selfLink));
   }
 
+
+  /**
+   * Fetches an order by its ID.
+   *
+   * @param id The id of the Order to be retrieved.
+   * @return A ResponseEntity containing the OrderResponseDTO.
+   */
   @GetMapping("/{id}")
-  public ResponseEntity<EntityModel<OrderDTO>> getOrder(@PathVariable Long id) {
-    OrderDTO orderDTO = orderService.getOrder(id);
-    EntityModel<OrderDTO> resource = EntityModel.of(orderDTO);
+  public ResponseEntity<EntityModel<OrderResponseDTO>> getOrder(@PathVariable Long id) {
+    OrderResponseDTO OrderResponseDTO = orderService.getOrder(id);
+    EntityModel<OrderResponseDTO> resource = EntityModel.of(OrderResponseDTO);
     resource.add(linkTo(methodOn(OrderController.class).getOrder(id)).withSelfRel());
     return ResponseEntity.ok(resource);
   }
 
+  /**
+   * Fetches all orders by User ID.
+   *
+   * @param userId The id of the User whose orders are to be retrieved.
+   * @param page The number of the page to retrieve.
+   * @param size The number of records in a page.
+   * @param sort The property to sort the results by.
+   * @param assembler Helps convert the Page into a PagedModel.
+   * @return A ResponseEntity containing a PagedModel of OrderResponseDTO.
+   */
   @GetMapping(value = "/users/{userId}/orders", consumes = {"application/json"}, produces = {"application/json"})
-  public ResponseEntity<PagedModel<EntityModel<OrderDTO>>> getOrdersFromUser(
+  public ResponseEntity<PagedModel<EntityModel<OrderResponseDTO>>> getOrdersFromUser(
       @PathVariable Long userId,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "id") String sort,
-      PagedResourcesAssembler<OrderDTO> assembler) {
+      PagedResourcesAssembler<OrderResponseDTO> assembler) {
 
     Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
-    Page<OrderDTO> ordersPage = orderService.getOrdersByUserId(userId, pageable);
+    Page<OrderResponseDTO> ordersPage = orderService.getOrdersByUserId(userId, pageable);
 
     Link selfLink = linkTo(methodOn(OrderController.class)
         .getOrdersFromUser(userId, page, size, sort, assembler)).withSelfRel();
 
     return ResponseEntity.ok(assembler.toModel(ordersPage,
-        orderDTO -> EntityModel.of(orderDTO,
-            linkTo(methodOn(OrderController.class).getOrder(orderDTO.orderId())).withSelfRel()), selfLink));
+        OrderResponseDTO -> EntityModel.of(OrderResponseDTO,
+            linkTo(methodOn(OrderController.class).getOrder(OrderResponseDTO.orderId())).withSelfRel()), selfLink));
   }
 
-  @PostMapping
-  public ResponseEntity<EntityModel<OrderDTO>> purchaseGiftCertificate(@RequestBody OrderRequestDTO orderRequestDto) {
-    OrderDTO orderDTO = orderService.purchaseGiftCertificate(orderRequestDto.userId(), orderRequestDto.certificateId());
-    EntityModel<OrderDTO> resource = EntityModel.of(orderDTO);
-    resource.add(linkTo(methodOn(OrderController.class).getOrder(orderDTO.orderId())).withSelfRel());
-    return ResponseEntity.ok(resource);
-  }
 
+
+  /**
+   * Retrieves the revision history of a specific Order.
+   *
+   * @param id The id of the Order for which revisions are to be fetched.
+   * @return A ResponseEntity containing a list of all Order revisions.
+   */
   @GetMapping("/{id}/revisions")
   public ResponseEntity getOrderRevisions(@PathVariable long id) {
     AuditReader reader = AuditReaderFactory.get(entityManager);

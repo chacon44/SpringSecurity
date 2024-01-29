@@ -70,7 +70,7 @@ public class CertificateService {
                 GiftCertificate foundCertificate = tryToFindCertificate.get();
                 Long idFound = foundCertificate.getId();
 
-                throw new CustomizedException(CERTIFICATE_ALREADY_EXISTS.formatted(idFound), ErrorCode.CERTIFICATE_ALREADY_FOUND);
+                throw new CustomizedException(CERTIFICATE_ALREADY_EXISTS.formatted(idFound), ErrorCode.CERTIFICATE_ALREADY_EXISTS);
             }
         } catch (DataAccessException ex) {
             throw new CustomizedException("Database error while saving GiftCertificate", ErrorCode.CERTIFICATE_DATABASE_ERROR, ex);

@@ -4,7 +4,6 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import com.epam.esm.dto.UserDTO;
-import com.epam.esm.dto.UserResponseDTO;
 import com.epam.esm.model.User;
 import com.epam.esm.service.UserService;
 import jakarta.persistence.EntityManager;
@@ -43,6 +42,15 @@ public class UserController {
     this.userService = userService;
   }
 
+  /**
+   * Retrieves a list of all Users, paged according to the provided parameters.
+   *
+   * @param page The number of the page to retrieve.
+   * @param size The number of records in a page.
+   * @param sort The property to sort the results by.
+   * @param assembler Assembles the paged results into the required format.
+   * @return A ResponseEntity containing the paged list of users in the response body.
+   */
   @GetMapping
   public ResponseEntity<PagedModel<EntityModel<UserDTO>>> getAllUsers(
       @RequestParam(defaultValue = "0") int page,
@@ -59,14 +67,26 @@ public class UserController {
     return ResponseEntity.ok(assembler.toModel(userDTOPage, selfLink));
   }
 
+  /**
+   * Retrieves the User which correlates with the provided id.
+   *
+   * @param id The id of the User to retrieve.
+   * @return A ResponseEntity containing the UserDTO in the response body.
+   */
   @GetMapping("/{id}")
-  public ResponseEntity<EntityModel<UserResponseDTO>> getUser(@PathVariable Long id) {
-    UserResponseDTO user = userService.getUser(id);
-    EntityModel<UserResponseDTO> resource = EntityModel.of(user);
+  public ResponseEntity<EntityModel<UserDTO>> getUser(@PathVariable Long id) {
+    UserDTO user = userService.getUser(id);
+    EntityModel<UserDTO> resource = EntityModel.of(user);
     resource.add(linkTo(UserController.class).slash(user.id()).withSelfRel());
     return ResponseEntity.ok(resource);
   }
 
+  /**
+   * Fetches all revisions of a User by id.
+   *
+   * @param id The id of the User for which to fetch revisions.
+   * @return A ResponseEntity containing all revisions of the User as a List.
+   */
   @GetMapping("/{id}/revisions")
   public ResponseEntity getUserRevisions(@PathVariable long id) {
     AuditReader reader = AuditReaderFactory.get(entityManager);

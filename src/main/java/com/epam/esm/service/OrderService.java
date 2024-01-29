@@ -36,6 +36,12 @@ public class OrderService {
     this.certificateRepository = certificateRepository;
   }
 
+  /**
+   * Fetches all orders from the repository and maps them to OrderResponseDTO objects.
+   *
+   * @param pageable The Pageable object containing the page number, size and sort.
+   * @return A page of OrderResponseDTO objects.
+   */
   public Page<OrderResponseDTO> getAllOrders(Pageable pageable) {
     try {
       Page<Order> ordersPage = orderRepository.findAll(pageable);
@@ -57,6 +63,14 @@ public class OrderService {
       throw new CustomizedException("Database error while getting all orders", ErrorCode.ORDER_DATABASE_ERROR, ex);
     }
   }
+
+  /**
+   * Fetches all orders by user ID from the repository and maps them to OrderResponseDTO objects.
+   *
+   * @param userId The ID of the user whose orders are to be retrieved.
+   * @param pageable The Pageable object containing the page number, size and sort.
+   * @return A page of OrderResponseDTO objects.
+   */
   public Page<OrderResponseDTO> getOrdersByUserId(Long userId, Pageable pageable) {
     try {
       Page<Order> ordersPage = orderRepository.findAllByUserId(userId, pageable);
@@ -70,6 +84,13 @@ public class OrderService {
       throw new CustomizedException("Database error while retrieving orders for user id:" + userId, ErrorCode.ORDER_DATABASE_ERROR, ex);
     }
   }
+
+  /**
+   * Fetches an order by its ID from the repository and maps it to an OrderResponseDTO object.
+   *
+   * @param id The ID of the order to be retrieved.
+   * @return The OrderResponseDTO object.
+   */
   public OrderResponseDTO getOrder(Long id) {
     try {
       Optional<Order> optionalOrder = orderRepository.findById(id);
@@ -91,17 +112,38 @@ public class OrderService {
     }
   }
 
+  /**
+   * Finds a User by the ID in the repository.
+   *
+   * @param userId The ID of the User to be retrieved.
+   * @return The User object.
+   * @throws CustomizedException if the User is not found.
+   */
   @Transactional
   private User getUser(Long userId) {
     return userRepository.findById(userId)
         .orElseThrow(() -> new CustomizedException("User with id " + userId + " not found.", ErrorCode.USER_NOT_FOUND));
   }
 
+  /**
+   * Finds a certificate by the ID in the repository.
+   *
+   * @param certificateId The ID of the certificate to be retrieved.
+   * @return The certificate object.
+   * @throws CustomizedException if the certificate is not found.
+   */
   private GiftCertificate getCertificate(Long certificateId) {
     return certificateRepository.findById(certificateId)
         .orElseThrow(() -> new CustomizedException("Certificate with ID " + certificateId + " not found.", ErrorCode.CERTIFICATE_NOT_FOUND));
   }
 
+  /**
+   * Purchases a certificate for a User.
+   *
+   * @param userId The ID of the user purchasing the certificate.
+   * @param certificateId The ID of the certificate to be purchased.
+   * @return The OrderResponseDTO containing the details of the purchase.
+   */
   @Transactional
   public OrderResponseDTO purchaseGiftCertificate(Long userId, Long certificateId) {
 

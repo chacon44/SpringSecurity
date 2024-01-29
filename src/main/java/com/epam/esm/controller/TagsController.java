@@ -45,6 +45,13 @@ public class TagsController {
     @Autowired
     private EntityManager entityManager;
 
+
+    /**
+     * Saves a new Tag.
+     *
+     * @param requestDTO The data of the new Tag to create.
+     * @return A ResponseEntity containing the saved Tag as a TagResponseDTO.
+     */
     @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<EntityModel<TagResponseDTO>> postTag(@RequestBody TagRequestDTO requestDTO) {
         TagResponseDTO tagDTO = tagService.saveTag(requestDTO.name());
@@ -55,6 +62,15 @@ public class TagsController {
         return ResponseEntity.status(CREATED).body(resource);
     }
 
+    /**
+     * Fetches all Tags according to the given paging and sorting parameters.
+     *
+     * @param page The number of the page to retrieve.
+     * @param size The size of the pages.
+     * @param sort The property by which to sort the results.
+     * @param assembler Helps convert the Page into a PagedModel.
+     * @return A ResponseEntity containing a PagedModel with all Tags.
+     */
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<TagResponseDTO>>> getAllTags(
         @RequestParam(defaultValue = "0") int page,
@@ -73,6 +89,11 @@ public class TagsController {
         return ResponseEntity.ok(pagedModel);
     }
 
+    /**
+     * Fetches the Tag that is used most.
+     *
+     * @return A ResponseEntity containing the most used Tag as a TagResponseDTO.
+     */
     @GetMapping(value = "/most-used-tag")
     public ResponseEntity<EntityModel<TagResponseDTO>> getMostUsedTag(){
         TagResponseDTO tagResponseDTO = tagService.getMostUsedTag();
@@ -83,12 +104,24 @@ public class TagsController {
         return ResponseEntity.status(OK).body(resource);
     }
 
+    /**
+     * Deletes a Tag by id.
+     *
+     * @param id The id of the Tag to delete.
+     * @return A ResponseEntity with the status code.
+     */
     @DeleteMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<Void> deleteTagById(@PathVariable long id) {
         tagService.deleteTag(id);
         return ResponseEntity.status(NO_CONTENT).build();
     }
 
+    /**
+     * Fetches all revisions of a Tag by id.
+     *
+     * @param id The id of the Tag for which to fetch revisions.
+     * @return A ResponseEntity containing all revisions of the Tag as a List.
+     */
     @GetMapping("/{id}/revisions")
     public ResponseEntity getTagRevisions(@PathVariable long id) {
         AuditReader reader = AuditReaderFactory.get(entityManager);

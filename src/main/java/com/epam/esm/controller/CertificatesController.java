@@ -47,6 +47,13 @@ public class CertificatesController {
     @Autowired
     private EntityManager entityManager;
 
+
+    /**
+     * Saves a new certificate and links it to a list of Tags.
+     *
+     * @param requestDTO The data of the new certificate to create.
+     * @return A ResponseEntity containing the saved certificate as a CertificateResponseDTO.
+     */
     @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<EntityModel<CertificateResponseDTO>> postCertificate(@RequestBody CertificateRequestDTO requestDTO) {
         GiftCertificate giftCertificate = new GiftCertificate(
@@ -64,6 +71,13 @@ public class CertificatesController {
         return ResponseEntity.status(CREATED).body(resource);
     }
 
+
+    /**
+     * Fetches a certificate by its ID.
+     *
+     * @param id The id of the certificate to be retrieved.
+     * @return A ResponseEntity containing the certificate as a CertificateResponseDTO.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<EntityModel<CertificateResponseDTO>> getCertificate(@PathVariable long id) {
         CertificateResponseDTO certificateDTO = certificateService.getGiftCertificate(id);
@@ -78,7 +92,14 @@ public class CertificatesController {
 
 //    Post /certificates
 //    PATCH /certificates/1
-//    GET /certificates/1/revisions -> assert, that size of returned list is 2.
+//    GET /certificates/1/revisions -> assert that the size of the returned list is 2.
+
+    /**
+     * Fetches all revisions of a certificate by its ID.
+     *
+     * @param id The id of the certificate for which revisions are to be fetched.
+     * @return A ResponseEntity containing all revisions of the certificate as a List.
+     */
     @GetMapping("/{id}/revisions")
     public ResponseEntity getCertificateRevisions(@PathVariable long id) {
         AuditReader reader = AuditReaderFactory.get(entityManager);
@@ -94,6 +115,18 @@ public class CertificatesController {
 
         return ResponseEntity.ok(resultList);
     }
+
+    /**
+     * Fetches all certificates that match the given criteria.
+     *
+     * @param tagName The names of the tags the certificates should have.
+     * @param searchWord The word to search for in the certificate's name and description.
+     * @param page The number of the page to retrieve.
+     * @param size The number of records in a page.
+     * @param sort The property by which to sort the results.
+     * @param assembler Helps convert the Page into a PagedModel.
+     * @return A ResponseEntity containing a PagedModel of CertificateResponseDTOs.
+     */
     @GetMapping
     public ResponseEntity<PagedModel<EntityModel<CertificateResponseDTO>>> getFilteredCertificates(
         @RequestParam(required = false) List<String> tagName,
@@ -115,12 +148,25 @@ public class CertificatesController {
                 linkTo(CertificatesController.class).slash(cert.certificateId()).withSelfRel()), selfLink));
     }
 
+    /**
+     * Deletes a certificate by its ID.
+     *
+     * @param id The id of the certificate to be deleted.
+     * @return A ResponseEntity with the status code.
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCertificate(@PathVariable long id) {
         certificateService.deleteGiftCertificate(id);
         return ResponseEntity.status(NO_CONTENT).build();
     }
 
+    /**
+     * Partially updates a certificate and links it to a new list of Tags.
+     *
+     * @param id The id of the certificate to be updated.
+     * @param requestDTO The new data for the certificate.
+     * @return A ResponseEntity containing the updated certificate as a CertificateResponseDTO.
+     */
     @PatchMapping("/{id}")
     public ResponseEntity<EntityModel<CertificateResponseDTO>> updateCertificate(@PathVariable Long id,
         @RequestBody CertificateRequestDTO requestDTO){
