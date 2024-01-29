@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
   //TAGS
+  TAG_ALREADY_EXISTS("200"+"_01", HttpStatus.FOUND),
   TAG_DATABASE_ERROR("400"+"_01", HttpStatus.SERVICE_UNAVAILABLE),
   TAG_ALREADY_FOUND("400"+"_02", HttpStatus.FOUND),
   TAG_NOT_FOUND("404"+"_01", HttpStatus.NOT_FOUND),
@@ -14,7 +15,7 @@ public enum ErrorCode {
   TAG_BAD_REQUEST("402"+"_01", HttpStatus.BAD_REQUEST),
 
   //CERTIFICATE
-  CERTIFICATE_ALREADY_FOUND("200"+"_02", HttpStatus.FOUND),
+  CERTIFICATE_ALREADY_EXISTS("200"+"_02", HttpStatus.FOUND),
   CERTIFICATE_DATABASE_ERROR("400"+"_02", HttpStatus.SERVICE_UNAVAILABLE),
   CERTIFICATE_NOT_FOUND("404"+"_02", HttpStatus.NOT_FOUND),
   CERTIFICATE_INTERNAL_SERVER_ERROR("500"+"_02", HttpStatus.INTERNAL_SERVER_ERROR),
