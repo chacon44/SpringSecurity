@@ -86,6 +86,15 @@ public class OrderService {
     }
   }
 
+  /**
+   * Adds a certificate to a user's orders.
+   *
+   * @param userId ID of the user who is purchasing the certificate.
+   * @param certificateId ID of the certificate to be purchased.
+   * @return the OrderDTO representing the new purchase.
+   * @throws CustomizedException If the user or certificate with the given ID doesn't exist
+   * or there's a database error while saving the order.
+   */
   @Transactional
   public OrderDTO purchaseGiftCertificate(Long userId, Long certificateId) {
     Object[] objects = getUserAndCertificateIfExist(userId, certificateId);

@@ -22,6 +22,13 @@ public class UserService {
     this.userRepository = userRepository;
   }
 
+  /**
+   * Retrieves a page of Users, represented as UserDTOs.
+   *
+   * @param pageable Paging details for the page of Users to be retrieved.
+   * @return A Page of UserDTOs.
+   * @throws CustomizedException If there is an error retrieving Users from the database.
+   */
   public Page<UserDTO> getAllUsers(Pageable pageable) {
     try {
       Page<User> userPage = userRepository.findAll(pageable);
@@ -31,6 +38,13 @@ public class UserService {
     }
   }
 
+  /**
+   * Retrieves a User by id, represented as a UserResponseDTO.
+   *
+   * @param userId The id of the User to be retrieved.
+   * @return A UserResponseDTO of the User.
+   * @throws CustomizedException If the User id is not found or there is an error retrieving the User from the database.
+   */
   public UserResponseDTO getUser(Long userId) {
     try {
       return userRepository.findById(userId)

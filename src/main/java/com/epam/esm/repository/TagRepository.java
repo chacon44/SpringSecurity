@@ -13,7 +13,6 @@ public interface TagRepository extends JpaRepository<Tag, Long>{
   Optional<Tag> findByName(String name);
   @NonNull
   Page<Tag> findAll(@NonNull Pageable pageable);
-  List<Tag> findAllByIdIn(List<Long> ids);
 
   String SELECT_TAG_IDS = "SELECT ct.tag_id FROM certificates cert";
   //fetches id of tags associated to each certificate

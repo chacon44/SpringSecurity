@@ -75,7 +75,7 @@ public class TagsController {
 
     @GetMapping(value = "/most-used-tag")
     public ResponseEntity<EntityModel<TagResponseDTO>> getMostUsedTag(){
-        TagResponseDTO tagResponseDTO = tagService.getMostPopularTag();
+        TagResponseDTO tagResponseDTO = tagService.getMostUsedTag();
         EntityModel<TagResponseDTO> resource = EntityModel.of(tagResponseDTO);
         resource.add(linkTo(methodOn(TagsController.class)
             .getMostUsedTag()).withSelfRel());

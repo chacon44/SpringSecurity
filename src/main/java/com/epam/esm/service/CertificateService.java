@@ -42,6 +42,16 @@ public class CertificateService {
         this.tagRepository = tagRepository;
     }
 
+    /**
+     * Adds a new certificate in the database.
+     *
+     * @param giftCertificate The certificate to save. Must not be null.
+     * @param tagIdsList      A list of the ids of tags to be associated with the certificate.
+     * @return The saved certificate in the form of a CertificateResponseDTO.
+     * @throws CustomizedException If certificate or any of the tagIds in tagIdsList are not valid,
+     *                             certificate already exists,
+     *                             or if there is a database error during saving.
+     */
     public CertificateResponseDTO saveGiftCertificate(@NonNull GiftCertificate giftCertificate, List<Long> tagIdsList) {
         try {
             Optional<ErrorDTO> requestValidationMessage = validateCertificateRequest(giftCertificate, tagIdsList);
@@ -51,7 +61,7 @@ public class CertificateService {
             Optional<GiftCertificate> tryToFindCertificate = certificateRepository.findByName(giftCertificate.getName());
 
             if (tryToFindCertificate.isEmpty()) {
-                List<Tag> tags = tagRepository.findAllByIdIn(tagIdsList);
+                List<Tag> tags = tagRepository.findAllById(tagIdsList);
                 giftCertificate.setTags(tags);
                 GiftCertificate savedGiftCertificate = certificateRepository.save(giftCertificate);
 
@@ -67,6 +77,13 @@ public class CertificateService {
         }
     }
 
+    /**
+     * Retrieve GiftCertificate with the given id.
+     *
+     * @param giftCertificateId The id of the certificate to retrieve. Must not be null.
+     * @return The certificate in the form of a CertificateResponseDTO.
+     * @throws CustomizedException If giftCertificateId is null, does not exist, or if there is a database error during retrieval.
+     */
     public CertificateResponseDTO getGiftCertificate(@NonNull Long giftCertificateId) {
         try {
             Optional<GiftCertificate> giftCertificate = certificateRepository.findById(giftCertificateId);
@@ -83,6 +100,15 @@ public class CertificateService {
         }
     }
 
+    /**
+     * Retrieves a page of certificates filtered by tagNames and a searchWord.
+     *
+     * @param tagNames   The tags that the certificates should have.
+     * @param searchWord The word to filter certificates by.
+     * @param pageable   The details of the page to retrieve.
+     * @return A page of filtered certificates in the form of CertificateResponseDTOs.
+     * @throws CustomizedException If there is a database error during retrieval.
+     */
     public Page<CertificateResponseDTO> getFilteredCertificates(
         List<String> tagNames,
         String searchWord,
@@ -97,6 +123,12 @@ public class CertificateService {
         }
     }
 
+    /**
+     * Deletes the certificate identified by certificateId.
+     *
+     * @param certificateId The id of the certificate to delete.
+     * @throws CustomizedException If certificateId does not exist, or if there is a database error during deletion.
+     */
     @Transactional
     public void deleteGiftCertificate(Long certificateId) {
 
@@ -109,6 +141,16 @@ public class CertificateService {
             throw new CustomizedException("Database error during deleting certificate with id " + certificateId, ErrorCode.CERTIFICATE_DATABASE_ERROR, ex);
         }
     }
+    /**
+     * Updates the given fields for the certificate identified by certificateId.
+     *
+     * @param certificateId The id of the certificate to update. Must not be null.
+     * @param updates       The certificate object that contains updated fields. Fields that are null will not be updated.
+     * @param newTagIdsList A list of the ids of new tags to be associated with the certificate.
+     * @return              The updated certificate in the form of a CertificateResponseDTO.
+     *
+     * @throws CustomizedException If certificateId is null, does not exist, or if there is a database error during update.
+     */
     @Transactional
     public CertificateResponseDTO updateGiftCertificate(@NonNull Long certificateId, GiftCertificate updates, List<Long> newTagIdsList) {
 
@@ -137,7 +179,7 @@ public class CertificateService {
                 existingCertificate.setDuration(updates.getDuration());
             }
             if (newTagIdsList != null) {
-                List<Tag> uniqueTags = tagRepository.findAllByIdIn(newTagIdsList);
+                List<Tag> uniqueTags = tagRepository.findAllById(newTagIdsList);
                 existingCertificate.setTags(uniqueTags);
             }
 
