@@ -1,15 +1,11 @@
 package service;
 
-import static com.epam.esm.exceptions.Codes.TAG_BAD_REQUEST;
-import static com.epam.esm.exceptions.Codes.TAG_NOT_FOUND;
 import static com.epam.esm.exceptions.Messages.TAG_ALREADY_EXISTS;
-import static com.epam.esm.exceptions.Messages.TAG_ID_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.FOUND;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 
+import com.epam.esm.dto.TagResponseDTO;
 import com.epam.esm.dto.errors.ErrorDTO;
 import com.epam.esm.model.Tag;
 import com.epam.esm.repository.TagRepository;
@@ -22,59 +18,57 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
-//
-//@ExtendWith(MockitoExtension.class)
-//public class TagServiceTest {
-//
-//    public static final String TAG_NAME = "name";
-//    public static final Long TAG_ID = 1L;
-//
-//    @InjectMocks
-//    private TagService tagService;
-//
-//    @Mock
-//    private TagRepository tagRepository;
-//
-//    @Mock
-//    Tag tag;
-//
-//    @Test
-//    public void saveTag_savedCorrectly_returnCreated() {
-//
-//        Mockito.when(tagRepository.save(any(Tag.class))).thenReturn(tag);
-//        Mockito.when(tagRepository.findByName(TAG_NAME)).thenReturn(Optional.empty());
-//
-//        ResponseEntity<?> actual = tagService.saveTag(TAG_NAME);
-//        Mockito.verify(tagRepository).save(any(Tag.class));
-//
-//        assertEquals(CREATED, actual.getStatusCode());
-//        assertEquals(tag, actual.getBody());
-//    }
-//
-//    @Test
-//    public void saveTag_tagAlreadyExists_returnBadRequest() {
-//
-//        Mockito.when(tagRepository.findByName(TAG_NAME)).thenReturn(Optional.ofNullable(tag));
-//
-//        ResponseEntity<?> actual = tagService.saveTag(TAG_NAME);
-//        String message = TAG_ALREADY_EXISTS.formatted(tag.getId());
-//
-//        ResponseEntity<ErrorDTO> responseEntity = ResponseEntity.badRequest().body(new ErrorDTO(message, TAG_BAD_REQUEST));
-//        Mockito.verify(tagRepository).findByName(Mockito.eq(TAG_NAME));
-//
-//        assertEquals(responseEntity.getBody(),actual.getBody());
-//        assertEquals(responseEntity.getStatusCode(), actual.getStatusCode());
-//    }
-//
-//    @Test
-//    public void saveTag_tagNotValid_returnBadRequest() {
-//
-//        ResponseEntity<?> actual = tagService.saveTag(null);
-//        ResponseEntity<ErrorDTO> responseEntity = ResponseEntity.badRequest()
-//                .body(new ErrorDTO("Tag name is required", TAG_BAD_REQUEST));
-//        assertEquals(responseEntity.getBody(),actual.getBody());
-//        assertEquals(responseEntity.getStatusCode(), actual.getStatusCode());
-//    }
+
+@ExtendWith(MockitoExtension.class)
+public class TagServiceTest {
+
+    public static final String TAG_NAME = "name";
+    public static final Long TAG_ID = 1L;
+
+    @InjectMocks
+    private TagService tagService;
+
+    @Mock
+    private TagRepository tagRepository;
+
+    @Mock
+    Tag tag;
+
+    @Mock
+    TagResponseDTO tagResponseDTO;
+
+    @Test
+    public void saveTag_savedCorrectly_returnCreated() {
+
+        Mockito.when(tag.getId()).thenReturn(TAG_ID);
+        Mockito.when(tag.getName()).thenReturn(TAG_NAME);
+
+        Mockito.when(tagRepository.save(any(Tag.class))).thenReturn(tag);
+        Mockito.when(tagRepository.findByName(TAG_NAME)).thenReturn(Optional.empty());
+
+        TagResponseDTO actual = tagService.saveTag(TAG_NAME);
+
+        Mockito.verify(tagRepository).save(any(Tag.class));
+
+        assertEquals(TAG_NAME, actual.name());
+        assertEquals(TAG_ID, actual.id());
+    }
+
+    @Test
+    public void saveTag_tagAlreadyExists_returnBadRequest() {
+
+        Mockito.when(tagRepository.findByName(TAG_NAME)).thenReturn(Optional.ofNullable(tag));
+
+        ResponseEntity<?> actual = tagService.saveTag(TAG_NAME);
+        String message = TAG_ALREADY_EXISTS.formatted(tag.getId());
+
+        ResponseEntity<ErrorDTO> responseEntity = ResponseEntity.badRequest().body(new ErrorDTO(message, TAG_BAD_REQUEST));
+        Mockito.verify(tagRepository).findByName(Mockito.eq(TAG_NAME));
+
+        assertEquals(responseEntity.getBody(),actual.getBody());
+        assertEquals(responseEntity.getStatusCode(), actual.getStatusCode());
+    }
+
 //
 //    @Test
 //    public void getTag_tagExists_returnTag(){
@@ -137,4 +131,4 @@ import org.springframework.http.ResponseEntity;
 //
 //        assertEquals(expected,retrievedTag);
 //    }
-//}
+}

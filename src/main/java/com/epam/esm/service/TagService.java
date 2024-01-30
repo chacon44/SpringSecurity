@@ -49,13 +49,12 @@ public class TagService {
                 throw new CustomizedException(TAG_ALREADY_EXISTS.formatted(tag.getId()), ErrorCode.TAG_ALREADY_EXISTS);
             });
 
-        Tag tag = new Tag();
-        tag.setName(tagName);
-
+            Tag tag = new Tag();
+            tag.setName(tagName);
 
             Tag savedTag = tagRepository.save(tag);
             return convertTagToTagReturnDTO(savedTag);
-        }catch (DataAccessException ex){
+        } catch (DataAccessException ex){
             throw new CustomizedException(TAG_CANNOT_BE_SAVED, ErrorCode.TAG_DATABASE_ERROR, ex);
         }
     }
