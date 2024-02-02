@@ -39,9 +39,6 @@ public class GenerationService {
   Faker faker = new Faker();
   Random random = new Random();
 
-
-  //TODO don't test generationservice
-
   public void deleteData() {
     try {
       orderRepository.deleteAll();
@@ -55,7 +52,7 @@ public class GenerationService {
 
   public void generateUsers(){
     try {
-      IntStream.range(0, 1000)
+      IntStream.range(0, 100)
           .mapToObj(i -> {
             User user = new User();
             user.setName(faker.name().fullName());
@@ -70,7 +67,7 @@ public class GenerationService {
   public void generateTags() {
 
     try {
-      IntStream.range(0, 1000).forEach(i -> {
+      IntStream.range(0, 100).forEach(i -> {
         String tagName = switch (i % 4) {
           case 0 -> "Book genre: " + faker.book().genre();
           case 1 -> "Favourite artist: " + faker.artist().name();
@@ -92,7 +89,7 @@ public class GenerationService {
   public void generateCertificates() {
     try{
       List<Tag> tags = tagRepository.findAll();
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 100; i++) {
       GiftCertificate certificate = new GiftCertificate();
       certificateCreation(certificate, tags);
       giftCertificateRepository.save(certificate);

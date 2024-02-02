@@ -5,12 +5,11 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import com.epam.esm.dto.UserDTO;
 import com.epam.esm.model.User;
+import com.epam.esm.service.AuditReaderService;
 import com.epam.esm.service.UserService;
-import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import org.hibernate.envers.AuditReader;
-import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +36,11 @@ public class UserController {
   private UserService userService;
 
   @Autowired
-  private EntityManager entityManager;
-  public UserController(UserService userService) {
+  private AuditReaderService auditReaderService;
+
+  public UserController(UserService userService, AuditReaderService auditReaderService) {
     this.userService = userService;
+    this.auditReaderService = auditReaderService;
   }
 
   /**
@@ -75,9 +76,9 @@ public class UserController {
    */
   @GetMapping("/{id}")
   public ResponseEntity<EntityModel<UserDTO>> getUser(@PathVariable Long id) {
-    UserDTO user = userService.getUser(id);
-    EntityModel<UserDTO> resource = EntityModel.of(user);
-    resource.add(linkTo(UserController.class).slash(user.id()).withSelfRel());
+    UserDTO userDTO = userService.getUser(id);
+    EntityModel<UserDTO> resource = EntityModel.of(userDTO);
+    resource.add(linkTo(methodOn(UserController.class).getUser(id)).withSelfRel());
     return ResponseEntity.ok(resource);
   }
 
@@ -89,7 +90,7 @@ public class UserController {
    */
   @GetMapping("/{id}/revisions")
   public ResponseEntity getUserRevisions(@PathVariable long id) {
-    AuditReader reader = AuditReaderFactory.get(entityManager);
+    AuditReader reader = auditReaderService.getReader();
     AuditQuery query = reader.createQuery().forRevisionsOfEntity(User.class, true, true);
     query.addOrder(AuditEntity.revisionNumber().desc());
     List<User> resultList = new ArrayList<>();

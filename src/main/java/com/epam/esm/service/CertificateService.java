@@ -44,7 +44,6 @@ public class CertificateService {
 
     /**
      * Adds a new certificate in the database.
-     *
      * @param giftCertificate The certificate to save. Must not be null.
      * @param tagIdsList      A list of the ids of tags to be associated with the certificate.
      * @return The saved certificate in the form of a CertificateResponseDTO.

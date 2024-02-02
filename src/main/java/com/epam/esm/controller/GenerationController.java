@@ -10,19 +10,28 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/generation")
 public class GenerationController {
 
-  //TODO document this class, not service
-
   @Autowired
   private GenerationService dataGenerationService;
 
+  /**
+   * Generate random users
+   */
   @PostMapping("/users")
   public void generateUsers() {
     dataGenerationService.generateUsers();
   }
+
+  /**
+   * Generate random tags
+   */
   @PostMapping("/tags")
   public void generateTags() {
     dataGenerationService.generateTags();
   }
+
+  /**
+   * Generate random certificates
+   */
   @PostMapping("/certificates")
   public void generateCertificates() {
     dataGenerationService.generateCertificates();

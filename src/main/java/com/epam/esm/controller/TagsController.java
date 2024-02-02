@@ -5,16 +5,16 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.ResponseEntity.status;
 
 import com.epam.esm.dto.TagRequestDTO;
 import com.epam.esm.dto.TagResponseDTO;
 import com.epam.esm.model.Tag;
+import com.epam.esm.service.AuditReaderService;
 import com.epam.esm.service.TagService;
-import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import org.hibernate.envers.AuditReader;
-import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,8 +43,12 @@ public class TagsController {
     private TagService tagService;
 
     @Autowired
-    private EntityManager entityManager;
+    private AuditReaderService auditReaderService;
 
+    public TagsController(TagService tagService, AuditReaderService auditReaderService) {
+        this.tagService = tagService;
+        this.auditReaderService = auditReaderService;
+    }
 
     /**
      * Saves a new Tag.
@@ -59,7 +63,7 @@ public class TagsController {
         EntityModel<TagResponseDTO> resource = EntityModel.of(tagDTO);
         resource.add(linkTo(TagsController.class).slash(tagDTO.id()).withSelfRel());
 
-        return ResponseEntity.status(CREATED).body(resource);
+        return status(CREATED).body(resource);
     }
 
     /**
@@ -101,7 +105,7 @@ public class TagsController {
         resource.add(linkTo(methodOn(TagsController.class)
             .getMostUsedTag()).withSelfRel());
 
-        return ResponseEntity.status(OK).body(resource);
+        return status(OK).body(resource);
     }
 
     /**
@@ -113,7 +117,7 @@ public class TagsController {
     @DeleteMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<Void> deleteTagById(@PathVariable long id) {
         tagService.deleteTag(id);
-        return ResponseEntity.status(NO_CONTENT).build();
+        return status(NO_CONTENT).build();
     }
 
     /**
@@ -124,7 +128,7 @@ public class TagsController {
      */
     @GetMapping("/{id}/revisions")
     public ResponseEntity getTagRevisions(@PathVariable long id) {
-        AuditReader reader = AuditReaderFactory.get(entityManager);
+        AuditReader reader = auditReaderService.getReader();
         AuditQuery query = reader.createQuery().forRevisionsOfEntity(Tag.class, true, true);
         query.addOrder(AuditEntity.revisionNumber().desc());
         List <Tag> resultList = new ArrayList<>();

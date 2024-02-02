@@ -9,12 +9,11 @@ import static org.springframework.http.HttpStatus.OK;
 import com.epam.esm.dto.CertificateRequestDTO;
 import com.epam.esm.dto.CertificateResponseDTO;
 import com.epam.esm.model.GiftCertificate;
+import com.epam.esm.service.AuditReaderService;
 import com.epam.esm.service.CertificateService;
-import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import org.hibernate.envers.AuditReader;
-import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +44,7 @@ public class CertificatesController {
     private CertificateService certificateService;
 
     @Autowired
-    private EntityManager entityManager;
+    private AuditReaderService auditReaderService;
 
 
     /**
@@ -88,12 +87,6 @@ public class CertificatesController {
         return ResponseEntity.status(OK).body(resource);
     }
 
-    //TODO integration test. Test here audit, pagination, HATEOAS (verify the links) Create testing data by hand
-
-//    Post /certificates
-//    PATCH /certificates/1
-//    GET /certificates/1/revisions -> assert that the size of the returned list is 2.
-
     /**
      * Fetches all revisions of a certificate by its ID.
      *
@@ -102,7 +95,7 @@ public class CertificatesController {
      */
     @GetMapping("/{id}/revisions")
     public ResponseEntity getCertificateRevisions(@PathVariable long id) {
-        AuditReader reader = AuditReaderFactory.get(entityManager);
+        AuditReader reader = auditReaderService.getReader();
         AuditQuery query = reader.createQuery().forRevisionsOfEntity(GiftCertificate.class, true, true);
         query.addOrder(AuditEntity.revisionNumber().desc());
         List <GiftCertificate> resultList = new ArrayList<>();

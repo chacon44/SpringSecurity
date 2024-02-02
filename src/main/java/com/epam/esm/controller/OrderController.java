@@ -3,15 +3,14 @@ package com.epam.esm.controller;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
-import com.epam.esm.dto.OrderResponseDTO;
 import com.epam.esm.dto.OrderRequestDTO;
+import com.epam.esm.dto.OrderResponseDTO;
 import com.epam.esm.model.Order;
+import com.epam.esm.service.AuditReaderService;
 import com.epam.esm.service.OrderService;
-import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import org.hibernate.envers.AuditReader;
-import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,10 +39,11 @@ public class OrderController {
   private OrderService orderService;
 
   @Autowired
-  private EntityManager entityManager;
+  private AuditReaderService auditReaderService;
 
-  public OrderController(OrderService orderService) {
+  public OrderController(OrderService orderService, AuditReaderService auditReaderService) {
     this.orderService = orderService;
+    this.auditReaderService = auditReaderService;
   }
 
   /**
@@ -141,7 +141,7 @@ public class OrderController {
    */
   @GetMapping("/{id}/revisions")
   public ResponseEntity getOrderRevisions(@PathVariable long id) {
-    AuditReader reader = AuditReaderFactory.get(entityManager);
+    AuditReader reader = auditReaderService.getReader();
     AuditQuery query = reader.createQuery().forRevisionsOfEntity(Order.class, true, true);
     query.addOrder(AuditEntity.revisionNumber().desc());
     List<Order> resultList = new ArrayList<>();
