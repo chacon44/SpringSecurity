@@ -7,13 +7,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
 
 import com.epam.esm.controller.OrderController;
 import com.epam.esm.dto.CertificateDTO;
 import com.epam.esm.dto.OrderRequestDTO;
 import com.epam.esm.dto.OrderResponseDTO;
 import com.epam.esm.dto.UserDTO;
+import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Order;
+import com.epam.esm.model.User;
 import com.epam.esm.service.AuditReaderService;
 import com.epam.esm.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,8 +36,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderControllerTest {
@@ -60,7 +61,7 @@ public class OrderControllerTest {
   private MockMvc mockMvc;
   @BeforeEach
   public void setup(){
-    this.mockMvc = MockMvcBuilders.standaloneSetup(orderController).build();
+    this.mockMvc = standaloneSetup(orderController).build();
   }
 
   public static String asJsonString(final Object obj) {
@@ -147,12 +148,25 @@ public class OrderControllerTest {
   public void testGetOrderRevisions() throws Exception {
     // Given
     Long orderId = 1L;
-    UserDTO userDTO = new UserDTO(1L, "User1");
-    CertificateDTO certificateDTO = new CertificateDTO(1L, "Certificate1", "Description1", 100.0, 5L, List.of(1L, 2L));
-    OrderResponseDTO orderResponseDTO = new OrderResponseDTO(1L, userDTO, certificateDTO, 100.0, LocalDateTime.now());
+
+    User user = new User();
+    user.setId(1L);
+    user.setName("User1");
+
+
+    GiftCertificate giftCertificate = new GiftCertificate();
+    giftCertificate.setId(1L);
+    giftCertificate.setName("Certificate1");
+    giftCertificate.setDescription("Description");
+    giftCertificate.setPrice(20.50);
+    giftCertificate.setDuration(20L);
 
     Order order1 = new Order();
     order1.setId(orderId);
+    order1.setUser(user);
+    order1.setCertificate(giftCertificate);
+    order1.setPrice(20.50);
+    order1.setCreateDate(LocalDateTime.now().toString());
 
     when(auditReaderService.getReader()).thenReturn(auditReader);
     when(auditReader.createQuery()).thenReturn(auditQueryCreator);
@@ -161,14 +175,13 @@ public class OrderControllerTest {
     when(auditReader.getRevisions(Order.class, orderId)).thenReturn(List.of(1));
     when(auditReader.find(Order.class, orderId, 1)).thenReturn(order1);
 
-    when(orderService.getOrder(1L)).thenReturn(orderResponseDTO);
 
     // When & Then
-    mockMvc.perform(MockMvcRequestBuilders.get("/order/" + orderId + "/revisions")
+    mockMvc.perform(get("/order/" + orderId + "/revisions")
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].orderId").value(1L))
-        .andExpect(jsonPath("$[0].user.id").value(1L))
-        .andExpect(jsonPath("$[0].certificate.certificateId").value(1L));
+        .andExpect(jsonPath("$[0].id").value(orderId))
+        .andExpect(jsonPath("$[0].price").value(order1.getPrice()))
+        .andExpect(jsonPath("$[0].createDate").value(order1.getCreateDate()));
   }
 }

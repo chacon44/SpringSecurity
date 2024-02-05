@@ -110,6 +110,7 @@ public class UserControllerTest {
     // When & Then
     mockMvc.perform(get("/users/" + userId + "/revisions"))
         .andExpect(status().isOk())
-        .andExpect(MockMvcResultMatchers.content().string(Matchers.containsString("User1")));
+        .andExpect(jsonPath("$.[0].id").value(1L))
+        .andExpect(jsonPath("$.[0].name").value("user name"));
   }
 }

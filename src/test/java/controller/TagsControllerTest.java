@@ -122,7 +122,7 @@ public class TagsControllerTest {
     when(auditReader.find(Tag.class, id, 2)).thenReturn(sampleTag);
 
     // When & Then
-    mockMvc.perform(MockMvcRequestBuilders.get("/tags/" + id + "/revisions")
+    mockMvc.perform(MockMvcRequestBuilders.get("/tag/" + id + "/revisions")
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.[0].id").value(id))

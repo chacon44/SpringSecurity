@@ -123,7 +123,6 @@ public class OrderService {
         .orElseThrow(() -> new CustomizedException("Certificate with ID " + certificateId + " not found.", ErrorCode.CERTIFICATE_NOT_FOUND));
   }
 
-
   private UserDTO mapToUserDTO(User user) {
     return new UserDTO(user.getId(), user.getName());
   }
