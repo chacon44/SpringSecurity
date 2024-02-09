@@ -1,10 +1,12 @@
 package controller;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -17,7 +19,6 @@ import com.epam.esm.service.TagService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Arrays;
 import java.util.List;
-import org.hamcrest.Matchers;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.query.AuditQuery;
 import org.hibernate.envers.query.AuditQueryCreator;
@@ -32,7 +33,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @ExtendWith(MockitoExtension.class)
@@ -84,7 +84,7 @@ public class TagsControllerTest {
   @Test
   public void testGetAllTags() throws Exception {
     // Given
-    List<TagResponseDTO> tags = List.of(new TagResponseDTO(1L, "Tag1"));
+    List<TagResponseDTO> tags = List.of(new TagResponseDTO(1L, "Tag"));
     Page<TagResponseDTO> tagDTOPage = new PageImpl<>(tags);
 
     // Mocks
@@ -93,7 +93,24 @@ public class TagsControllerTest {
     // When & Then
     mockMvc.perform(get("/tag"))
         .andExpect(status().isOk())
-        .andExpect(MockMvcResultMatchers.content().string(Matchers.containsString("Tag1")));
+        .andExpect(content().string(containsString("Tag")));
+  }
+
+  @Test
+  public void testGetTag() throws Exception {
+    // Given
+    Long id = 1L;
+    TagResponseDTO existingTag = new TagResponseDTO(id, "ExistingTag");
+
+    // Mocks
+    when(tagService.getTag(id)).thenReturn(existingTag);
+
+    // When & Then
+    mockMvc.perform(MockMvcRequestBuilders.get("/tag/" + id)
+            .accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(id))
+        .andExpect(jsonPath("$.name").value("ExistingTag"));
   }
 
   @Test
@@ -102,7 +119,20 @@ public class TagsControllerTest {
     mockMvc.perform(delete("/tag/1").contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent());
   }
+  @Test
+  public void getMostUsedTag() throws Exception {
+    // Given
+    TagResponseDTO tagResponseDTO = new TagResponseDTO(1L, "Tag1");
 
+    // Mocks
+    when(tagService.getMostUsedTag()).thenReturn(tagResponseDTO);
+
+    // When & Then
+    mockMvc.perform(get("/tag/most-used-tag").accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(1L))
+        .andExpect(jsonPath("$.name").value("Tag1"));
+  }
   @Test
   public void testGetTagRevisions() throws Exception {
     // Given

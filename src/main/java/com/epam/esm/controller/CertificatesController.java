@@ -94,7 +94,7 @@ public class CertificatesController {
      * @return A ResponseEntity containing all revisions of the certificate as a List.
      */
     @GetMapping("/{id}/revisions")
-    public ResponseEntity getCertificateRevisions(@PathVariable long id) {
+    public ResponseEntity<?> getCertificateRevisions(@PathVariable long id) {
         AuditReader reader = auditReaderService.getReader();
         AuditQuery query = reader.createQuery().forRevisionsOfEntity(GiftCertificate.class, true, true);
         query.addOrder(AuditEntity.revisionNumber().desc());

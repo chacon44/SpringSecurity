@@ -46,13 +46,14 @@ public class GenerationService {
       tagRepository.deleteAll();
       userRepository.deleteAll();
     } catch (DataAccessException ex) {
-      throw new CustomizedException("Error deleting data from repositories", ErrorCode.DATABASE_ERROR, ex);
+      throw new CustomizedException("Error deleting data from repositories",
+          ErrorCode.DATABASE_ERROR, ex);
     }
   }
 
-  public void generateUsers(){
+  public void generateUsers() {
     try {
-      IntStream.range(0, 100)
+      IntStream.range(0, 1000)
           .mapToObj(i -> {
             User user = new User();
             user.setName(faker.name().fullName());
@@ -67,7 +68,7 @@ public class GenerationService {
   public void generateTags() {
 
     try {
-      IntStream.range(0, 100).forEach(i -> {
+      IntStream.range(0, 1000).forEach(i -> {
         String tagName = switch (i % 4) {
           case 0 -> "Book genre: " + faker.book().genre();
           case 1 -> "Favourite artist: " + faker.artist().name();
@@ -80,23 +81,26 @@ public class GenerationService {
 
         tagRepository.save(tag);
       });
-    }catch (DataAccessException ex) {
+    } catch (DataAccessException ex) {
       throw new CustomizedException("Error generating tags", ErrorCode.DATABASE_ERROR, ex);
     }
   }
 
 
   public void generateCertificates() {
-    try{
+    try {
       List<Tag> tags = tagRepository.findAll();
-    for (int i = 0; i < 100; i++) {
-      GiftCertificate certificate = new GiftCertificate();
-      certificateCreation(certificate, tags);
-      giftCertificateRepository.save(certificate);
+      for (int i = 0; i < 5000; i++) {
+        GiftCertificate certificate = new GiftCertificate();
+        certificateCreation(certificate, tags);
+        giftCertificateRepository.save(certificate);
+      }
+    } catch (DataAccessException ex) {
+      throw new CustomizedException("Error generating certificates", ErrorCode.DATABASE_ERROR, ex);
+    } catch (Exception ex){
+      throw new CustomizedException("Error saving certificate", ErrorCode.DATABASE_ERROR, ex);
     }
-    }catch (DataAccessException ex) {
-    throw new CustomizedException("Error generating certificates", ErrorCode.DATABASE_ERROR, ex);
-  }
+
   }
 
   private void certificateCreation(GiftCertificate certificate, List<Tag> tags) {
@@ -115,10 +119,9 @@ public class GenerationService {
 
       assignRandomTags(tags, random, certificateTags);
       certificate.setTags(certificateTags);
+    } catch (DataAccessException ex) {
+      throw new CustomizedException("Error assigning tags", ErrorCode.DATABASE_ERROR, ex);
     }
-    catch (DataAccessException ex) {
-    throw new CustomizedException("Error assigning tags", ErrorCode.DATABASE_ERROR, ex);
-  }
   }
 
   private void assignRandomTags(List<Tag> tags, Random random, List<Tag> certificateTags) {
@@ -130,10 +133,11 @@ public class GenerationService {
           certificateTags.add(randomTag);
         }
       }
-    }catch (DataAccessException ex) {
+    } catch (DataAccessException ex) {
       throw new CustomizedException("Error assigning random tags", ErrorCode.DATABASE_ERROR, ex);
     }
   }
+
   private static String maximumLengthChecking(String name) {
     if (name.length() > 200) {
       name = name.substring(0, 200);

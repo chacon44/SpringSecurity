@@ -1,13 +1,15 @@
 package controller;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
 import com.epam.esm.controller.OrderController;
 import com.epam.esm.dto.CertificateDTO;
@@ -36,6 +38,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderControllerTest {
@@ -144,6 +147,28 @@ public class OrderControllerTest {
         .andExpect(jsonPath("$.content[0].certificate.certificateId").value(1L));
   }
 
+  @Test
+  public void testGetOrdersFromUser() throws Exception {
+
+    Long userId = 1L;
+    UserDTO userDTO = new UserDTO(userId, "User");
+    CertificateDTO certificateDTO
+        = new CertificateDTO(1L, "Certificate", "Description", 20.50, 5L, List.of(1L, 2L));
+    OrderResponseDTO orderResponseDTO
+        = new OrderResponseDTO(1L, userDTO, certificateDTO, 20.50, LocalDateTime.now());
+
+    List<OrderResponseDTO> orders = List.of(orderResponseDTO);
+    Page<OrderResponseDTO> orderDTOPage = new PageImpl<>(orders);
+
+    when(orderService.getOrdersByUserId(any(Long.class), any(Pageable.class)))
+        .thenReturn(orderDTOPage);
+
+    mockMvc.perform(MockMvcRequestBuilders.get("/order/users/" + userId).accept(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("User")))
+        .andExpect(content().string(containsString("Certificate")))
+        .andExpect(content().string(containsString("Description")));
+  }
   @Test
   public void testGetOrderRevisions() throws Exception {
     // Given

@@ -1,6 +1,8 @@
 package com.epam.esm.repository;
 
 import com.epam.esm.model.GiftCertificate;
+import com.epam.esm.model.Tag;
+import java.util.List;
 import java.util.Optional;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
@@ -14,4 +16,6 @@ public interface CertificateRepository extends JpaRepository<GiftCertificate, Lo
   @NonNull
   Page<GiftCertificate> findAll(@NonNull Specification<GiftCertificate> spec,@NonNull Pageable pageable);
   Optional<GiftCertificate> findByName(String certificateName);
+  List<GiftCertificate> findAllByTagsContaining(Tag tag);
+
 }

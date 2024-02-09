@@ -8,9 +8,12 @@ import static com.epam.esm.exceptions.Messages.TAG_ID_NOT_FOUND;
 import com.epam.esm.dto.TagResponseDTO;
 import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
+import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
+import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +27,12 @@ import org.springframework.stereotype.Service;
 public class TagService {
 
     private final TagRepository tagRepository;
+    private final CertificateRepository certificateRepository;
 
     @Autowired
-    public TagService(TagRepository tagRepository) {
+    public TagService(TagRepository tagRepository, CertificateRepository certificateRepository) {
         this.tagRepository = tagRepository;
+        this.certificateRepository = certificateRepository;
     }
 
     /**
@@ -95,6 +100,24 @@ public class TagService {
         }
     }
 
+
+    /**
+     * Retrieves a Tag by id, represented as a TagResponseDTO.
+     *
+     * @param tagId The id of the Tag to be retrieved.
+     * @return A TagResponseDTO of the Tag.
+     * @throws CustomizedException If the Tag id is not found or there is an error retrieving the Tag from the database.
+     */
+    public TagResponseDTO getTag(Long tagId){
+        try {
+            return tagRepository.findById(tagId)
+                .map(tag -> new TagResponseDTO(tag.getId(), tag.getName()))
+                .orElseThrow(() -> new CustomizedException(TAG_ID_NOT_FOUND.formatted(tagId), ErrorCode.TAG_NOT_FOUND));
+        } catch (DataAccessException ex) {
+            throw new CustomizedException("Error retrieving tag with id " + tagId, ErrorCode.TAG_DATABASE_ERROR, ex);
+        }
+    }
+
     /**
      * Deletes the tag with the provided id.
      *
@@ -107,7 +130,17 @@ public class TagService {
             throw new CustomizedException(TAG_ID_NOT_FOUND.formatted(tagId), ErrorCode.TAG_NOT_FOUND);
         }
         try {
+            Tag tag = tagRepository.findById(tagId).get();
+
+            List<GiftCertificate> certificates = certificateRepository.findAllByTagsContaining(tag);
+
+            for(GiftCertificate certificate : certificates) {
+                certificate.getTags().remove(tag);
+                certificateRepository.save(certificate);
+            }
+
             tagRepository.deleteById(tagId);
+
         } catch (DataAccessException ex) {
             throw new CustomizedException("Database error during deleting tag with id " + tagId, ErrorCode.TAG_DATABASE_ERROR, ex);
         }

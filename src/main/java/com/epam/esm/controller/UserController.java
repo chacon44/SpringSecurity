@@ -89,7 +89,7 @@ public class UserController {
    * @return A ResponseEntity containing all revisions of the User as a List.
    */
   @GetMapping("/{id}/revisions")
-  public ResponseEntity getUserRevisions(@PathVariable long id) {
+  public ResponseEntity<?> getUserRevisions(@PathVariable long id) {
     AuditReader reader = auditReaderService.getReader();
     AuditQuery query = reader.createQuery().forRevisionsOfEntity(User.class, true, true);
     query.addOrder(AuditEntity.revisionNumber().desc());
@@ -97,8 +97,8 @@ public class UserController {
 
     List <Number> revisionNumbers = reader.getRevisions(User.class, id);
     for (Number rev : revisionNumbers) {
-      User auditedCertificate = reader.find(User.class, id, rev);
-      resultList.add(auditedCertificate);
+      User auditedUser = reader.find(User.class, id, rev);
+      resultList.add(auditedUser);
     }
 
     return ResponseEntity.ok(resultList);

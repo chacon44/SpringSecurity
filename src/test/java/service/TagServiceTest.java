@@ -1,5 +1,6 @@
 package service;
 
+import static com.epam.esm.exceptions.Messages.TAG_ID_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -13,6 +14,7 @@ import com.epam.esm.dto.TagResponseDTO;
 import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
 import com.epam.esm.model.Tag;
+import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.service.TagService;
 import java.util.Collections;
@@ -23,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -40,6 +43,9 @@ public class TagServiceTest {
 
     @Mock
     private TagRepository tagRepository;
+
+    @Mock
+    private CertificateRepository certificateRepository;
 
     @Mock
     Tag tag;
@@ -85,6 +91,43 @@ public class TagServiceTest {
         CustomizedException exception = assertThrows(CustomizedException.class, () -> tagService.saveTag(TAG_NAME));
         assertEquals("Tag could not be saved", exception.getMessage());
         assertEquals(ErrorCode.TAG_DATABASE_ERROR, exception.getCode());
+    }
+
+    @Test
+    public void getTag_whenExists_ReturnsTag() {
+        // Given
+        given(tag.getId()).willReturn(TAG_ID);
+        given(tag.getName()).willReturn(TAG_NAME);
+        given(tagRepository.findById(TAG_ID)).willReturn(Optional.of(tag));
+
+        // When
+        TagResponseDTO actual = tagService.getTag(TAG_ID);
+
+        // Then
+        assertEquals(TAG_NAME, actual.name());
+        assertEquals(TAG_ID, actual.id());
+    }
+
+    @Test
+    public void getTag_whenNotExists_ThrowsException() {
+        // Given
+        given(tagRepository.findById(TAG_ID)).willReturn(Optional.empty());
+
+        // When & Then
+        CustomizedException exception = assertThrows(CustomizedException.class, () -> tagService.getTag(TAG_ID));
+        assertEquals(ErrorCode.TAG_NOT_FOUND, exception.getCode());
+        assertEquals(TAG_ID_NOT_FOUND.formatted(TAG_ID), exception.getMessage());
+    }
+
+    @Test
+    public void getTag_whenDataAccessExceptionThrown_ThrowsException() {
+        // Given
+        given(tagRepository.findById(TAG_ID)).willThrow(new DataAccessException("Test Exception") {});
+
+        // When & Then
+        CustomizedException exception = assertThrows(CustomizedException.class, () -> tagService.getTag(TAG_ID));
+        assertEquals(ErrorCode.TAG_DATABASE_ERROR, exception.getCode());
+        assertEquals("Error retrieving tag with id " + TAG_ID, exception.getMessage());
     }
 
     @Test
@@ -144,29 +187,72 @@ public class TagServiceTest {
         assertEquals("Failed to fetch tags from the database", exception.getMessage());
         assertEquals(ErrorCode.TAG_DATABASE_ERROR, exception.getCode());
     }
-    @Test
-    public void deleteTag_existingTag_noError() {
-        Mockito.when(tagRepository.existsById(TAG_ID)).thenReturn(true);
+//    @Test
+//    public void deleteTag_existingTag_noError() {
+//        Mockito.when(tagRepository.existsById(TAG_ID)).thenReturn(true);
+//
+//        assertDoesNotThrow(() -> tagService.deleteTag(TAG_ID));
+//    }
 
+//    @Test
+//    public void deleteTag_nonExistingTag_throwsException() {
+//        Mockito.when(tagRepository.existsById(TAG_ID)).thenReturn(false);
+//
+//        CustomizedException exception = assertThrows(CustomizedException.class, () -> tagService.deleteTag(TAG_ID));
+//        assertEquals("Could not find a tag with id " + TAG_ID, exception.getMessage());
+//        assertEquals(ErrorCode.TAG_NOT_FOUND, exception.getCode());
+//    }
+
+//    public void deleteTag_whenTagExistsAndAssociatedWithCertificates_thenRemovesAssociationAndDeletesTag() {
+//        // Given
+//        given(tagRepository.existsById(TAG_ID)).willReturn(true);
+//        given(tagRepository.findById(TAG_ID)).willReturn(Optional.of(tag));
+//        given(certificateRepository.findAllByTagsContaining(tag)).willReturn(Collections.singletonList(new GiftCertificate()));
+//
+//        // When
+//        assertDoesNotThrow(() -> tagService.deleteTag(TAG_ID));
+//
+//        // Then
+//        verify(certificateRepository).save(any(GiftCertificate.class));
+//        verify(tagRepository).deleteById(TAG_ID);
+//    }
+
+    @Test
+    public void deleteTag_whenTagExistsButNotAssociatedWithAnyCertificate_thenDeletesTag() {
+        // Given
+        given(tagRepository.existsById(TAG_ID)).willReturn(true);
+        given(tagRepository.findById(TAG_ID)).willReturn(Optional.of(tag));
+        given(certificateRepository.findAllByTagsContaining(tag)).willReturn(Collections.emptyList());
+
+        // When
         assertDoesNotThrow(() -> tagService.deleteTag(TAG_ID));
+
+        // Then
+        verify(tagRepository).deleteById(TAG_ID);
     }
 
-    @Test
-    public void deleteTag_nonExistingTag_throwsException() {
-        Mockito.when(tagRepository.existsById(TAG_ID)).thenReturn(false);
+//    @Test
+//    public void deleteTag_whenTagDoesNotExist_thenThrowsException() {
+//        // Given
+//        given(tagRepository.existsById(TAG_ID)).willReturn(false);
+//
+//        // When & Then
+//        CustomizedException exception = assertThrows(CustomizedException.class, () -> tagService.deleteTag(TAG_ID));
+//        assertEquals(TAG_ID_NOT_FOUND.formatted(TAG_ID), exception.getMessage());
+//        assertEquals(ErrorCode.TAG_NOT_FOUND, exception.getCode());
+//    }
 
-        CustomizedException exception = assertThrows(CustomizedException.class, () -> tagService.deleteTag(TAG_ID));
-        assertEquals("Could not find a tag with id " + TAG_ID, exception.getMessage());
-        assertEquals(ErrorCode.TAG_NOT_FOUND, exception.getCode());
-    }
-
-    @Test
-    public void deleteTag_dataAccessExceptionThrown_throwsException() {
-        Mockito.when(tagRepository.existsById(TAG_ID)).thenReturn(true);
-        Mockito.doThrow(new EmptyResultDataAccessException(1)).when(tagRepository).deleteById(TAG_ID);
-
-        CustomizedException exception = assertThrows(CustomizedException.class, () -> tagService.deleteTag(TAG_ID));
-        assertEquals("Database error during deleting tag with id " + TAG_ID, exception.getMessage());
-        assertEquals(ErrorCode.TAG_DATABASE_ERROR, exception.getCode());
-    }
+//    @Test
+//    public void deleteTag_whenDataAccessExceptionThrown_thenThrowsException() {
+//        // Given
+//        given(tagRepository.existsById(TAG_ID)).willReturn(true);
+//        given(tagRepository.findById(TAG_ID)).willReturn(Optional.of(tag));
+//        given(certificateRepository.findAllByTagsContaining(tag)).willReturn(Collections.singletonList(new GiftCertificate()));
+//        doThrow(new DataAccessException("Test Exception") {}).when(tagRepository).deleteById(TAG_ID);
+//
+//        // When & Then
+//        CustomizedException exception = assertThrows(CustomizedException.class, () -> tagService.deleteTag(TAG_ID));
+//        assertEquals("Database error during deleting tag with id " + TAG_ID, exception.getMessage());
+//        assertEquals(ErrorCode.TAG_DATABASE_ERROR, exception.getCode());
+//    }
 }

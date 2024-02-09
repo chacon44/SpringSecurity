@@ -114,10 +114,24 @@ public class TagsController {
      * @param id The id of the Tag to delete.
      * @return A ResponseEntity with the status code.
      */
-    @DeleteMapping(value = "/{id}", consumes = {"application/json"}, produces = {"application/json"})
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTagById(@PathVariable long id) {
         tagService.deleteTag(id);
-        return status(NO_CONTENT).build();
+        return ResponseEntity.status(NO_CONTENT).build();
+    }
+
+    /**
+     * Fetches a tag by its ID.
+     *
+     * @param id The id of the Tag to be retrieved.
+     * @return A ResponseEntity containing the TagResponseDTO.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<EntityModel<TagResponseDTO>> getTag(@PathVariable Long id) {
+        TagResponseDTO tagResponseDTO = tagService.getTag(id);
+        EntityModel<TagResponseDTO> resource = EntityModel.of(tagResponseDTO);
+        resource.add(linkTo(methodOn(TagsController.class).getTag(id)).withSelfRel());
+        return ResponseEntity.ok(resource);
     }
 
     /**
@@ -127,7 +141,7 @@ public class TagsController {
      * @return A ResponseEntity containing all revisions of the Tag as a List.
      */
     @GetMapping("/{id}/revisions")
-    public ResponseEntity getTagRevisions(@PathVariable long id) {
+    public ResponseEntity<?> getTagRevisions(@PathVariable long id) {
         AuditReader reader = auditReaderService.getReader();
         AuditQuery query = reader.createQuery().forRevisionsOfEntity(Tag.class, true, true);
         query.addOrder(AuditEntity.revisionNumber().desc());

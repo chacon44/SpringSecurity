@@ -112,7 +112,7 @@ public class OrderController {
    * @param assembler Helps convert the Page into a PagedModel.
    * @return A ResponseEntity containing a PagedModel of OrderResponseDTO.
    */
-  @GetMapping(value = "/users/{userId}/orders", consumes = {"application/json"}, produces = {"application/json"})
+  @GetMapping(value = "/users/{userId}", produces = {"application/json"})
   public ResponseEntity<PagedModel<EntityModel<OrderResponseDTO>>> getOrdersFromUser(
       @PathVariable Long userId,
       @RequestParam(defaultValue = "0") int page,
@@ -126,9 +126,10 @@ public class OrderController {
     Link selfLink = linkTo(methodOn(OrderController.class)
         .getOrdersFromUser(userId, page, size, sort, assembler)).withSelfRel();
 
-    return ResponseEntity.ok(assembler.toModel(ordersPage,
+    PagedModel<EntityModel<OrderResponseDTO>> pagedModel = assembler.toModel(ordersPage,
         OrderResponseDTO -> EntityModel.of(OrderResponseDTO,
-            linkTo(methodOn(OrderController.class).getOrder(OrderResponseDTO.orderId())).withSelfRel()), selfLink));
+            linkTo(methodOn(OrderController.class).getOrder(OrderResponseDTO.orderId())).withSelfRel()), selfLink);
+    return ResponseEntity.ok(pagedModel);
   }
 
 
@@ -139,19 +140,22 @@ public class OrderController {
    * @param id The id of the Order for which revisions are to be fetched.
    * @return A ResponseEntity containing a list of all Order revisions.
    */
-  @GetMapping("/{id}/revisions")
-  public ResponseEntity getOrderRevisions(@PathVariable long id) {
+  @GetMapping(value = "/{id}/revisions")
+  public ResponseEntity<?> getOrderRevisions(@PathVariable long id) {
     AuditReader reader = auditReaderService.getReader();
     AuditQuery query = reader.createQuery().forRevisionsOfEntity(Order.class, true, true);
     query.addOrder(AuditEntity.revisionNumber().desc());
     List<Order> resultList = new ArrayList<>();
 
+    //return OrderDTO list
     List <Number> revisionNumbers = reader.getRevisions(Order.class, id);
     for (Number rev : revisionNumbers) {
-      Order auditedCertificate = reader.find(Order.class, id, rev);
-      resultList.add(auditedCertificate);
+      Order auditedCOrder = reader.find(Order.class, id, rev);
+      resultList.add(auditedCOrder);
     }
 
+    //make the conversion here before return
+    //map the list to DTO
     return ResponseEntity.ok(resultList);
   }
 
