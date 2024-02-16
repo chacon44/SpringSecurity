@@ -1,66 +1,158 @@
 package com.epam.esm.controller;
 
-import com.epam.esm.Dto.Tag.TagRequestDTO;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.ResponseEntity.status;
+
+import com.epam.esm.dto.TagRequestDTO;
+import com.epam.esm.dto.TagResponseDTO;
+import com.epam.esm.model.Tag;
+import com.epam.esm.service.AuditReaderService;
 import com.epam.esm.service.TagService;
+import java.util.ArrayList;
+import java.util.List;
+import org.hibernate.envers.AuditReader;
+import org.hibernate.envers.query.AuditEntity;
+import org.hibernate.envers.query.AuditQuery;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/tag")
 public class TagsController {
 
     @Autowired
     private TagService tagService;
 
-    /**
-     * Creates a new tag.
-     *
-     * @param requestDTO The data transfer object containing the details of the tag to be created.
-     * @return ResponseEntity<?> A response entity representing the result of the creation operation.
-     *      It could contain the created tag, a custom message, or nothing (in case of void).
-     *      if tag name is not valid, returns bad request
-     *      if tag already exists, returns bad request
-     *      if tag does not exist, but cannot be saved, return bad request
-     *      if it is saved, return CREATED and tag saved
-     * @PostMapping This annotation maps HTTP POST requests onto this method.
-     * @value "/tag" The path where this method is mapped.
-     * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
-     * @produces {"application/json"} Specifies that this method returns data in application/json format.
-     */
-    @PostMapping(value = "/tag", consumes = {"application/json"}, produces = {"application/json"})
-    ResponseEntity<?> postTag(@RequestBody TagRequestDTO requestDTO) {
-        return tagService.saveTag(requestDTO.name());
+    @Autowired
+    private AuditReaderService auditReaderService;
+
+    public TagsController(TagService tagService, AuditReaderService auditReaderService) {
+        this.tagService = tagService;
+        this.auditReaderService = auditReaderService;
     }
 
     /**
-     * Retrieves a tag by its ID.
+     * Saves a new Tag.
      *
-     * @param id The unique identifier of the tag to be retrieved.
-     * @return ResponseEntity<?> A response entity containing the tag with the given ID.
-     * can return the requested tag, or not found
-     * @GetMapping This annotation maps HTTP GET requests onto this method.
-     * @value "/tag/{id}" The path where this method is mapped. It includes a path variable 'id'.
-     * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
-     * @produces {"application/json"} Specifies that this method returns data in application/json format.
+     * @param requestDTO The data of the new Tag to create.
+     * @return A ResponseEntity containing the saved Tag as a TagResponseDTO.
      */
-    @GetMapping(value = "/tag/{id}", consumes = {"application/json"}, produces = {"application/json"})
-    ResponseEntity<?> getTagById(@PathVariable long id) {
-        return tagService.getTag(id);
+    @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
+    public ResponseEntity<EntityModel<TagResponseDTO>> postTag(@RequestBody TagRequestDTO requestDTO) {
+        TagResponseDTO tagDTO = tagService.saveTag(requestDTO.name());
+
+        EntityModel<TagResponseDTO> resource = EntityModel.of(tagDTO);
+        resource.add(linkTo(TagsController.class).slash(tagDTO.id()).withSelfRel());
+
+        return status(CREATED).body(resource);
     }
 
     /**
-     * Deletes a tag by its ID.
+     * Fetches all Tags according to the given paging and sorting parameters.
      *
-     * @param id The unique identifier of the tag to be deleted.
-     * @return ResponseEntity<?> A response entity representing the result of the deletion operation.
-     * can return found or not found
-     * @DeleteMapping This annotation maps HTTP DELETE requests onto this method.
-     * @value "/tag/{id}" The path where this method is mapped. It includes a path variable 'id'.
-     * @consumes {"application/json"} Specifies that this method only processes requests where the Content-Type header is application/json.
-     * @produces {"application/json"} Specifies that this method returns data in application/json format.
+     * @param page The number of the page to retrieve.
+     * @param size The size of the pages.
+     * @param sort The property by which to sort the results.
+     * @param assembler Helps convert the Page into a PagedModel.
+     * @return A ResponseEntity containing a PagedModel with all Tags.
      */
-    @DeleteMapping(value = "/tag/{id}", consumes = {"application/json"}, produces = {"application/json"})
-    ResponseEntity<?> deleteTagById(@PathVariable long id) {
-        return tagService.deleteTag(id);
+    @GetMapping
+    public ResponseEntity<PagedModel<EntityModel<TagResponseDTO>>> getAllTags(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "id") String sort,
+        PagedResourcesAssembler<TagResponseDTO> assembler) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+
+        Page<TagResponseDTO> tagDTOPage = tagService.getAllTags(pageable);
+
+        PagedModel<EntityModel<TagResponseDTO>> pagedModel = assembler.toModel(tagDTOPage,
+            tagDTO -> EntityModel.of(tagDTO,
+                linkTo(TagsController.class).slash(tagDTO.id()).withSelfRel()));
+
+        return ResponseEntity.ok(pagedModel);
+    }
+
+    /**
+     * Fetches the Tag that is used most.
+     *
+     * @return A ResponseEntity containing the most used Tag as a TagResponseDTO.
+     */
+    @GetMapping(value = "/most-used-tag")
+    public ResponseEntity<EntityModel<TagResponseDTO>> getMostUsedTag(){
+        TagResponseDTO tagResponseDTO = tagService.getMostUsedTag();
+        EntityModel<TagResponseDTO> resource = EntityModel.of(tagResponseDTO);
+        resource.add(linkTo(methodOn(TagsController.class)
+            .getMostUsedTag()).withSelfRel());
+
+        return status(OK).body(resource);
+    }
+
+    /**
+     * Deletes a Tag by id.
+     *
+     * @param id The id of the Tag to delete.
+     * @return A ResponseEntity with the status code.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTagById(@PathVariable long id) {
+        tagService.deleteTag(id);
+        return ResponseEntity.status(NO_CONTENT).build();
+    }
+
+    /**
+     * Fetches a tag by its ID.
+     *
+     * @param id The id of the Tag to be retrieved.
+     * @return A ResponseEntity containing the TagResponseDTO.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<EntityModel<TagResponseDTO>> getTag(@PathVariable Long id) {
+        TagResponseDTO tagResponseDTO = tagService.getTag(id);
+        EntityModel<TagResponseDTO> resource = EntityModel.of(tagResponseDTO);
+        resource.add(linkTo(methodOn(TagsController.class).getTag(id)).withSelfRel());
+        return ResponseEntity.ok(resource);
+    }
+
+    /**
+     * Fetches all revisions of a Tag by id.
+     *
+     * @param id The id of the Tag for which to fetch revisions.
+     * @return A ResponseEntity containing all revisions of the Tag as a List.
+     */
+    @GetMapping("/{id}/revisions")
+    public ResponseEntity<?> getTagRevisions(@PathVariable long id) {
+        AuditReader reader = auditReaderService.getReader();
+        AuditQuery query = reader.createQuery().forRevisionsOfEntity(Tag.class, true, true);
+        query.addOrder(AuditEntity.revisionNumber().desc());
+        List <Tag> resultList = new ArrayList<>();
+
+        List <Number> revisionNumbers = reader.getRevisions(Tag.class, id);
+        for (Number rev : revisionNumbers) {
+            Tag auditedTag = reader.find(Tag.class, id, rev);
+            resultList.add(auditedTag);
+        }
+
+        return ResponseEntity.ok(resultList);
     }
 }

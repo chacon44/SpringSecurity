@@ -1,96 +1,152 @@
 package com.epam.esm.service;
 
-import static com.epam.esm.exceptions.Codes.TAG_BAD_REQUEST;
-import static com.epam.esm.exceptions.Codes.TAG_NOT_FOUND;
-import static com.epam.esm.exceptions.Messages.*;
-import static org.springframework.http.HttpStatus.*;
+import static com.epam.esm.exceptions.Messages.NOT_VALID_TAG_REQUEST;
+import static com.epam.esm.exceptions.Messages.TAG_ALREADY_EXISTS;
+import static com.epam.esm.exceptions.Messages.TAG_CANNOT_BE_SAVED;
+import static com.epam.esm.exceptions.Messages.TAG_ID_NOT_FOUND;
 
-import com.epam.esm.Dto.Errors.ErrorDTO;
+import com.epam.esm.dto.TagResponseDTO;
+import com.epam.esm.exceptions.CustomizedException;
+import com.epam.esm.exceptions.ErrorCode;
+import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
-import com.epam.esm.repository.GiftCertificateTagRepository;
+import com.epam.esm.repository.CertificateRepository;
+import com.epam.esm.repository.TagRepository;
+import jakarta.transaction.Transactional;
+import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public class TagService {
 
-    private final GiftCertificateTagRepository giftCertificateTagRepository;
-
+    private final TagRepository tagRepository;
+    private final CertificateRepository certificateRepository;
 
     @Autowired
-    public TagService(GiftCertificateTagRepository giftCertificateTagRepository) {
-        this.giftCertificateTagRepository = giftCertificateTagRepository;
+    public TagService(TagRepository tagRepository, CertificateRepository certificateRepository) {
+        this.tagRepository = tagRepository;
+        this.certificateRepository = certificateRepository;
     }
 
     /**
+     * Saves a tag with the provided name.
      *
-     * @param tagName name of the tag to be saved.
-     * @return
-     * if tag name is not valid, returns bad request
-     * if tag already exists, returns bad request
-     * if tag does not exist, but cannot be saved, return bad request
-     * if it is saved, return CREATED and tag saved
+     * @param tagName The name for the new tag. Should not be null or empty.
+     * @return The saved tag as a TagResponseDTO.
+     * @throws CustomizedException if tagName is null or empty, if tag already exists, or if there is a database error during saving.
      */
-    public ResponseEntity<?> saveTag(String tagName) {
+    @Transactional
+    public TagResponseDTO saveTag(String tagName) {
         if (tagName == null || tagName.isEmpty()) {
-            return ResponseEntity.badRequest().body(new ErrorDTO("Tag name is required", TAG_BAD_REQUEST));
-        }
-        Tag tag = giftCertificateTagRepository.getTagByName(tagName);
-
-        if (tag != null) {
-
-            String message = TAG_ALREADY_EXISTS.formatted(tag.getId());
-            return ResponseEntity.badRequest().body(new ErrorDTO(message, TAG_BAD_REQUEST));
+            throw new CustomizedException(NOT_VALID_TAG_REQUEST, ErrorCode.TAG_BAD_REQUEST);
         }
 
-        Tag tagSaved = giftCertificateTagRepository.saveTag(tagName);
-        if (tagSaved == null) {
-            return ResponseEntity.status(BAD_REQUEST).body(new ErrorDTO(TAG_COULD_NOT_BE_SAVED, TAG_BAD_REQUEST));
-        }
+        try {
+        tagRepository.findByName(tagName)
+            .ifPresent(tag -> {
+                throw new CustomizedException(TAG_ALREADY_EXISTS.formatted(tag.getId()), ErrorCode.TAG_ALREADY_EXISTS);
+            });
 
-        Tag tagResponse = giftCertificateTagRepository.getTagById(tagSaved.getId());
+            Tag tag = new Tag();
+            tag.setName(tagName);
 
-        return ResponseEntity.status(CREATED).body(tagResponse);
-    }
-
-    /**
-     *
-     * @param tagId unique tag id
-     * @return if tag is retrieved, returns tag
-     * if not, returns not found
-     */
-    public ResponseEntity<?> getTag(long tagId) {
-        Tag tag = giftCertificateTagRepository.getTagById(tagId);
-
-        if (tag != null) {
-            return ResponseEntity.status(FOUND).body(tag);
-        } else {
-            String message = TAG_ID_NOT_FOUND.formatted(tagId);
-
-            ErrorDTO errorResponse = new ErrorDTO(message, TAG_NOT_FOUND);
-            return ResponseEntity.status(NOT_FOUND).body(errorResponse);
+            Tag savedTag = tagRepository.save(tag);
+            return convertTagToTagReturnDTO(savedTag);
+        } catch (DataAccessException ex){
+            throw new CustomizedException(TAG_CANNOT_BE_SAVED, ErrorCode.TAG_DATABASE_ERROR, ex);
         }
     }
 
     /**
+     * Retrieves the most used tag by user with highest cost of orders.
      *
-     * @param tagId unique tag id
-     * @return
-     * if tag has been deleted, returns found
-     * if not, returns not found
+     * @return The most used tag as a TagResponseDTO, or null if no tags exist.
+     * @throws CustomizedException if there is a database error during fetch.
      */
-    public ResponseEntity<?> deleteTag(long tagId) {
-
-        boolean tagSuccessfullyDeleted = giftCertificateTagRepository.deleteTag(tagId);
-        if (tagSuccessfullyDeleted) {
-            return ResponseEntity.status(FOUND).body(null);
+    public TagResponseDTO getMostUsedTag(){
+        try {
+            Optional<Long> tagId = tagRepository.findMostUsedTagOfUserWithHighestTotalCostOfOrders();
+            if(tagId.isPresent()) {
+                Tag tag = tagRepository.getReferenceById(tagId.get());
+                return convertTagToTagReturnDTO(tag);
+            }
+            else return null;
+        } catch (DataAccessException ex) {
+            throw new CustomizedException("Database error while fetching tag", ErrorCode.TAG_DATABASE_ERROR, ex);
         }
+    }
 
-        String message = TAG_ID_NOT_FOUND.formatted(tagId);
-        ErrorDTO errorResponse = new ErrorDTO(message, TAG_NOT_FOUND);
-        return ResponseEntity.status(NOT_FOUND).body(errorResponse);
+    /**
+     * Retrieves all tags, paged according to the provided Pageable.
+     *
+     * @param pageable Details for the paging of the results.
+     * @return A page of tag results as TagResponseDTOs.
+     * @throws CustomizedException if there is a database error during fetch.
+     */
+    public Page<TagResponseDTO> getAllTags(Pageable pageable) {
+        try {
+            return tagRepository.findAll(pageable)
+                .map(this::convertTagToTagReturnDTO);
+
+        } catch (DataAccessException ex) {
+            throw new CustomizedException("Failed to fetch tags from the database", ErrorCode.TAG_DATABASE_ERROR, ex);
+        }
+    }
+
+
+    /**
+     * Retrieves a Tag by id, represented as a TagResponseDTO.
+     *
+     * @param tagId The id of the Tag to be retrieved.
+     * @return A TagResponseDTO of the Tag.
+     * @throws CustomizedException If the Tag id is not found or there is an error retrieving the Tag from the database.
+     */
+    public TagResponseDTO getTag(Long tagId){
+        try {
+            return tagRepository.findById(tagId)
+                .map(tag -> new TagResponseDTO(tag.getId(), tag.getName()))
+                .orElseThrow(() -> new CustomizedException(TAG_ID_NOT_FOUND.formatted(tagId), ErrorCode.TAG_NOT_FOUND));
+        } catch (DataAccessException ex) {
+            throw new CustomizedException("Error retrieving tag with id " + tagId, ErrorCode.TAG_DATABASE_ERROR, ex);
+        }
+    }
+
+    /**
+     * Deletes the tag with the provided id.
+     *
+     * @param tagId The id of the tag to delete.
+     * @throws CustomizedException if tagId does not exist, or if there is a database error during deletion.
+     */
+    @Transactional
+    public void deleteTag(long tagId) {
+        if (!tagRepository.existsById(tagId)) {
+            throw new CustomizedException(TAG_ID_NOT_FOUND.formatted(tagId), ErrorCode.TAG_NOT_FOUND);
+        }
+        try {
+            Tag tag = tagRepository.findById(tagId).get();
+
+            List<GiftCertificate> certificates = certificateRepository.findAllByTagsContaining(tag);
+
+            for(GiftCertificate certificate : certificates) {
+                certificate.getTags().remove(tag);
+                certificateRepository.save(certificate);
+            }
+
+            tagRepository.deleteById(tagId);
+
+        } catch (DataAccessException ex) {
+            throw new CustomizedException("Database error during deleting tag with id " + tagId, ErrorCode.TAG_DATABASE_ERROR, ex);
+        }
+    }
+
+    private TagResponseDTO convertTagToTagReturnDTO(Tag tag) {
+        return new TagResponseDTO(tag.getId(), tag.getName());
     }
 }
