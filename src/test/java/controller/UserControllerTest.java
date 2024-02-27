@@ -70,7 +70,7 @@ public class UserControllerTest {
     when(userService.getAllUsers(any())).thenReturn(userDTOPage);
 
     // When & Then
-    mockMvc.perform(get("/users"))
+    mockMvc.perform(get("/api/users"))
         .andExpect(status().isOk())
         .andExpect(MockMvcResultMatchers.content().string(Matchers.containsString("User1")));
   }
@@ -84,7 +84,7 @@ public class UserControllerTest {
     when(userService.getUser(1L)).thenReturn(userDTO);
 
     // When & Then
-    mockMvc.perform(get("/users/1"))
+    mockMvc.perform(get("/api/users/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(1L))
         .andExpect(jsonPath("$.name").value("User1"))
@@ -108,7 +108,7 @@ public class UserControllerTest {
     when(auditReader.find(User.class, userId, 1)).thenReturn(user1);
 
     // When & Then
-    mockMvc.perform(get("/users/" + userId + "/revisions"))
+    mockMvc.perform(get("/api/users/" + userId + "/revisions"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.[0].id").value(1L))
         .andExpect(jsonPath("$.[0].name").value("user name"));

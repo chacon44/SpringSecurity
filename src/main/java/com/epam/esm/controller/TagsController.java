@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/tag")
+@RequestMapping("/api")
 public class TagsController {
 
     @Autowired
@@ -56,7 +56,7 @@ public class TagsController {
      * @param requestDTO The data of the new Tag to create.
      * @return A ResponseEntity containing the saved Tag as a TagResponseDTO.
      */
-    @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
+    @PostMapping(value ="/admin/tag", consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<EntityModel<TagResponseDTO>> postTag(@RequestBody TagRequestDTO requestDTO) {
         TagResponseDTO tagDTO = tagService.saveTag(requestDTO.name());
 
@@ -94,11 +94,11 @@ public class TagsController {
     }
 
     /**
-     * Fetches the Tag that is used most.
+     * Fetches the most used tag.
      *
      * @return A ResponseEntity containing the most used Tag as a TagResponseDTO.
      */
-    @GetMapping(value = "/most-used-tag")
+    @GetMapping(value = "/tag/most-used-tag")
     public ResponseEntity<EntityModel<TagResponseDTO>> getMostUsedTag(){
         TagResponseDTO tagResponseDTO = tagService.getMostUsedTag();
         EntityModel<TagResponseDTO> resource = EntityModel.of(tagResponseDTO);
@@ -114,7 +114,7 @@ public class TagsController {
      * @param id The id of the Tag to delete.
      * @return A ResponseEntity with the status code.
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping(value ="/admin/tag/{id}")
     public ResponseEntity<Void> deleteTagById(@PathVariable long id) {
         tagService.deleteTag(id);
         return ResponseEntity.status(NO_CONTENT).build();
@@ -126,7 +126,7 @@ public class TagsController {
      * @param id The id of the Tag to be retrieved.
      * @return A ResponseEntity containing the TagResponseDTO.
      */
-    @GetMapping("/{id}")
+    @GetMapping("/tag/{id}")
     public ResponseEntity<EntityModel<TagResponseDTO>> getTag(@PathVariable Long id) {
         TagResponseDTO tagResponseDTO = tagService.getTag(id);
         EntityModel<TagResponseDTO> resource = EntityModel.of(tagResponseDTO);
@@ -140,7 +140,7 @@ public class TagsController {
      * @param id The id of the Tag for which to fetch revisions.
      * @return A ResponseEntity containing all revisions of the Tag as a List.
      */
-    @GetMapping("/{id}/revisions")
+    @GetMapping("/tag/{id}/revisions")
     public ResponseEntity<?> getTagRevisions(@PathVariable long id) {
         AuditReader reader = auditReaderService.getReader();
         AuditQuery query = reader.createQuery().forRevisionsOfEntity(Tag.class, true, true);

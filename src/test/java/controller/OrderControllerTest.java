@@ -89,7 +89,7 @@ public class OrderControllerTest {
     when(orderService.purchaseGiftCertificate(anyLong(), anyLong())).thenReturn(orderResponseDTO);
 
     // When & Then
-    mockMvc.perform(post("/order")
+    mockMvc.perform(post("/api/order")
             .contentType(MediaType.APPLICATION_JSON)
             .content(asJsonString(orderRequestDTO)))
         .andExpect(status().isOk())
@@ -112,7 +112,7 @@ public class OrderControllerTest {
     when(orderService.getOrder(1L)).thenReturn(orderResponseDTO);
 
     // When & Then
-    mockMvc.perform(get("/order/1"))
+    mockMvc.perform(get("/api/order/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.orderId").value(1L))
         .andExpect(jsonPath("$.user.id").value(1L))
@@ -140,7 +140,7 @@ public class OrderControllerTest {
         .thenReturn(orderDTOPage);
 
     // When & Then
-    mockMvc.perform(get("/order"))
+    mockMvc.perform(get("/api/order"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content[0].orderId").value(1L))
         .andExpect(jsonPath("$.content[0].user.id").value(1L))
@@ -163,7 +163,7 @@ public class OrderControllerTest {
     when(orderService.getOrdersByUserId(any(Long.class), any(Pageable.class)))
         .thenReturn(orderDTOPage);
 
-    mockMvc.perform(MockMvcRequestBuilders.get("/order/users/" + userId).accept(MediaType.APPLICATION_JSON))
+    mockMvc.perform(MockMvcRequestBuilders.get("/api/order/users/" + userId).accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("User")))
         .andExpect(content().string(containsString("Certificate")))
@@ -202,7 +202,7 @@ public class OrderControllerTest {
 
 
     // When & Then
-    mockMvc.perform(get("/order/" + orderId + "/revisions")
+    mockMvc.perform(get("/api/order/" + orderId + "/revisions")
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].id").value(orderId))

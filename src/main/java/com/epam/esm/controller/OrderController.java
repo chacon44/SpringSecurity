@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/order")
+@RequestMapping("/api/order")
 public class OrderController {
 
   @Autowired
@@ -52,7 +52,7 @@ public class OrderController {
    * @param orderRequestDto Contains the ids of the User and the Gift Certificate.
    * @return A ResponseEntity containing the OrderResponseDTO.
    */
-  @PostMapping
+  @PostMapping("/admin")
   public ResponseEntity<EntityModel<OrderResponseDTO>> purchaseGiftCertificate(@RequestBody OrderRequestDTO orderRequestDto) {
     OrderResponseDTO OrderResponseDTO = orderService.purchaseGiftCertificate(orderRequestDto.userId(), orderRequestDto.certificateId());
     EntityModel<OrderResponseDTO> resource = EntityModel.of(OrderResponseDTO);

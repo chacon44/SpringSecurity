@@ -3,10 +3,12 @@ package com.epam.esm.service;
 import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
 import com.epam.esm.model.GiftCertificate;
+import com.epam.esm.model.Role;
 import com.epam.esm.model.Tag;
 import com.epam.esm.model.User;
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.OrderRepository;
+import com.epam.esm.repository.RoleRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.UserRepository;
 import com.github.javafaker.Faker;
@@ -18,7 +20,10 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,6 +31,9 @@ public class GenerationService {
 
   @Autowired
   private TagRepository tagRepository;
+
+  @Autowired
+  private RoleRepository roleRepository;
 
   @Autowired
   private UserRepository userRepository;
@@ -36,9 +44,17 @@ public class GenerationService {
   @Autowired
   private CertificateRepository giftCertificateRepository;
 
+//  @Autowired
+//  private PasswordEncoder passwordEncoder;
+
   Faker faker = new Faker();
   Random random = new Random();
 
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+
+    return new BCryptPasswordEncoder();
+  }
   public void deleteData() {
     try {
       orderRepository.deleteAll();
@@ -52,11 +68,32 @@ public class GenerationService {
   }
 
   public void generateUsers() {
+    Role userRole = roleRepository.findById(1L)
+        .orElseThrow(() -> new RuntimeException("Role User not found"));
+    Role adminRole = roleRepository.findById(2L)
+        .orElseThrow(() -> new RuntimeException("Role Admin not found"));
+
     try {
       IntStream.range(0, 1000)
           .mapToObj(i -> {
             User user = new User();
-            user.setName(faker.name().fullName());
+            String password = faker.animal().name() + faker.number().digit();
+            String name = faker.name().firstName();
+            String surname = faker.name().lastName();
+            user.setName(name + " " + surname);
+            user.setUsername(name.toLowerCase() + "_" + surname.toLowerCase());
+            user.setEmail(user.getUsername() + "@epam.com");
+            user.setNotCryptedPassword(password);
+            user.setPassword(this.passwordEncoder().encode(password));
+            user.setEnable(faker.bool().bool());
+
+            // assign roles randomly
+            if (faker.bool().bool()) {
+              user.getRoles().add(adminRole);
+            } else {
+              user.getRoles().add(userRole);
+            }
+
             return user;
           })
           .forEach(userRepository::save);

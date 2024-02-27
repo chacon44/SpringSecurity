@@ -85,7 +85,7 @@ public class CertificatesControllerTest {
     when(certificateService.saveGiftCertificate(any(GiftCertificate.class), anyList())).thenReturn(responseDTO);
 
     // When & Then
-    mockMvc.perform(post("/certificate")
+    mockMvc.perform(post("/api/certificate")
             .contentType(MediaType.APPLICATION_JSON)
             .content(asJsonString(requestDTO)))
         .andExpect(status().isCreated())
@@ -108,7 +108,7 @@ public class CertificatesControllerTest {
     when(certificateService.getGiftCertificate(anyLong())).thenReturn(responseDTO);
 
     // When & Then
-    mockMvc.perform(get("/certificate/" + 1L)
+    mockMvc.perform(get("/api/certificate/" + 1L)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.certificateId").value(1L))
@@ -141,7 +141,7 @@ public class CertificatesControllerTest {
     when(certificateService.getFilteredCertificates(any(), any(), any())).thenReturn(certificateDTOPage);
 
     // When & Then
-    mockMvc.perform(get("/certificate")
+    mockMvc.perform(get("/api/certificate")
             .param("tagName", tagNames.toArray(new String[0]))
             .param("searchWord", searchWord)
             .param("page", String.valueOf(page))
@@ -166,7 +166,7 @@ public class CertificatesControllerTest {
     doNothing().when(certificateService).deleteGiftCertificate(anyLong());
 
     // When & Then
-    mockMvc.perform(delete("/certificate/" + id)
+    mockMvc.perform(delete("/api/certificate/" + id)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent());
   }
@@ -182,7 +182,7 @@ public class CertificatesControllerTest {
     when(certificateService.updateGiftCertificate(anyLong(), any(GiftCertificate.class), anyList())).thenReturn(responseDTO);
 
     // When & Then
-    mockMvc.perform(patch("/certificate/" + 1L)
+    mockMvc.perform(patch("/api/certificate/" + 1L)
             .contentType(MediaType.APPLICATION_JSON)
             .content(asJsonString(requestDTO)))
         .andExpect(status().isOk())
@@ -217,7 +217,7 @@ public class CertificatesControllerTest {
     when(auditReader.find(GiftCertificate.class, id, 2)).thenReturn(sampleCertificate);
 
     // When & Then
-    mockMvc.perform(MockMvcRequestBuilders.get("/certificate/" + id + "/revisions")
+    mockMvc.perform(MockMvcRequestBuilders.get("/api/certificate/" + id + "/revisions")
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.[0].id").value(1L))

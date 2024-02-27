@@ -10,6 +10,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -56,6 +59,26 @@ public class User {
   @Column(name = "last_update_date")
   private String lastUpdateDate;
 
+  @Setter
+  @Column(name = "username")
+  private String username;
+
+  @Setter
+  @Column(name = "email")
+  private String email;
+
+  @Setter
+  //encrypted String using BCryptPasswordEncoder
+  @Column(name = "password")
+  private String password;
+
+  @Column(name = "NotCryptedPassword")
+  private String notCryptedPassword;
+
+  @Setter
+  @Column(name = "enable")
+  private Boolean enable;
+
   @PrePersist
   protected void onCreate() {
     if (this.createDate == null) {
@@ -75,4 +98,12 @@ public class User {
   @JsonManagedReference
   @OneToMany(mappedBy = "user", cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
   private Set<Order> orders = new HashSet<>();
+
+  @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+  @JoinTable(
+      name = "user_roles",
+      joinColumns = @JoinColumn(name = "user_id"),
+      inverseJoinColumns = @JoinColumn(name = "role_id")
+  )
+  private Set<Role> roles = new HashSet<>();
 }

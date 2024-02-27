@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/certificate")
+@RequestMapping("api/certificate")
 public class CertificatesController {
 
     @Autowired
@@ -53,7 +53,7 @@ public class CertificatesController {
      * @param requestDTO The data of the new certificate to create.
      * @return A ResponseEntity containing the saved certificate as a CertificateResponseDTO.
      */
-    @PostMapping(consumes = {"application/json"}, produces = {"application/json"})
+    @PostMapping(value="/admin", consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<EntityModel<CertificateResponseDTO>> postCertificate(@RequestBody CertificateRequestDTO requestDTO) {
         GiftCertificate giftCertificate = new GiftCertificate(
             requestDTO.name(),

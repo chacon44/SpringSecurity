@@ -73,7 +73,7 @@ public class TagsControllerTest {
     when(tagService.saveTag(any(String.class))).thenReturn(tagResponse);
 
     // When & Then
-    mockMvc.perform(post("/tag")
+    mockMvc.perform(post("/api/tag")
             .contentType(MediaType.APPLICATION_JSON)
             .content(new ObjectMapper().writeValueAsString(tagRequest)))
         .andExpect(status().isCreated())
@@ -91,7 +91,7 @@ public class TagsControllerTest {
     when(tagService.getAllTags(any())).thenReturn(tagDTOPage);
 
     // When & Then
-    mockMvc.perform(get("/tag"))
+    mockMvc.perform(get("/api/tag"))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("Tag")));
   }
@@ -106,7 +106,7 @@ public class TagsControllerTest {
     when(tagService.getTag(id)).thenReturn(existingTag);
 
     // When & Then
-    mockMvc.perform(MockMvcRequestBuilders.get("/tag/" + id)
+    mockMvc.perform(MockMvcRequestBuilders.get("/api/tag/" + id)
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(id))
@@ -116,7 +116,7 @@ public class TagsControllerTest {
   @Test
   public void testDeleteTagById() throws Exception {
 
-    mockMvc.perform(delete("/tag/1").contentType(MediaType.APPLICATION_JSON))
+    mockMvc.perform(delete("/api/tag/1").contentType(MediaType.APPLICATION_JSON))
         .andExpect(status().isNoContent());
   }
   @Test
@@ -128,7 +128,7 @@ public class TagsControllerTest {
     when(tagService.getMostUsedTag()).thenReturn(tagResponseDTO);
 
     // When & Then
-    mockMvc.perform(get("/tag/most-used-tag").accept(MediaType.APPLICATION_JSON))
+    mockMvc.perform(get("/api/tag/most-used-tag").accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(1L))
         .andExpect(jsonPath("$.name").value("Tag1"));
@@ -152,7 +152,7 @@ public class TagsControllerTest {
     when(auditReader.find(Tag.class, id, 2)).thenReturn(sampleTag);
 
     // When & Then
-    mockMvc.perform(MockMvcRequestBuilders.get("/tag/" + id + "/revisions")
+    mockMvc.perform(MockMvcRequestBuilders.get("/api/tag/" + id + "/revisions")
             .accept(MediaType.APPLICATION_JSON))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.[0].id").value(id))
