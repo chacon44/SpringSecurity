@@ -1,24 +1,28 @@
 package com.epam.esm.controller;
 
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
+import com.epam.esm.service.LoginService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 public class LoginController {
 
-  @GetMapping("/login")
-  public String getLoginPage(Model model) {
-    return "login";
-  }
+  @Autowired
+  private LoginService loginService;
+  @PostMapping("/api/login")
+  public ResponseEntity<?> loginUser(
+      @RequestParam("username") String username,
+      @RequestParam("password") String password) {
 
-  @GetMapping("/home")
-  public String getHomePage(Model model, OAuth2AuthenticationToken authentication) {
-//    if (authentication != null) {
-//      String name = authentication.getPrincipal().getAttribute("name");
-//      model.addAttribute("username", name);
-//    }
-    return "home";
+    boolean isAuthenticated = loginService.checkAuthentication(username, password);
+
+    if(isAuthenticated) {
+      return ResponseEntity.ok().body("User logged in successfully.");
+    } else {
+      return ResponseEntity.status(401).body("Authentication failed, user or password not correct.");
+    }
   }
 }
