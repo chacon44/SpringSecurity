@@ -2,10 +2,18 @@ package com.epam.esm.service;
 
 import com.epam.esm.model.User;
 import com.epam.esm.repository.UserRepository;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,22 +22,18 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     private UserRepository userRepository;
 
-    @Override
+  @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-      User userDetails = userRepository.findByUsername(username);
+      User user = userRepository.findByUsername(username);
 
 
-      if (userDetails == null) {
+      if (user == null) {
         throw new UsernameNotFoundException("User with username: " + username + " not found");
       }
 
-      // get a role from the database from each user
-      // Getting user from database and convert to spring security user format
-      // Create and return the Spring Security UserDetails object
-      return org.springframework.security.core.userdetails.User.builder()
-          .username(userDetails.getUsername())
-          .password(userDetails.getPassword())
-          .roles("ADMIN") // user.getRole
-          .build();
-    }
+      List<GrantedAuthority> authorities = user.getRoles().stream()
+          .map(role -> new SimpleGrantedAuthority(role.getName().toUpperCase()))
+          .collect(Collectors.toList());
+
+      return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);    }
 }
