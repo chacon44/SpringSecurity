@@ -20,7 +20,9 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -42,12 +44,17 @@ public class GenerationService {
   @Autowired
   private CertificateRepository giftCertificateRepository;
 
-  @Autowired
-  private PasswordEncoder passwordEncoder;
+//  @Autowired
+//  private PasswordEncoder passwordEncoder;
 
   Faker faker = new Faker();
   Random random = new Random();
 
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+
+    return new BCryptPasswordEncoder();
+  }
   public void deleteData() {
     try {
       orderRepository.deleteAll();
@@ -77,7 +84,7 @@ public class GenerationService {
             user.setUsername(name.toLowerCase() + "_" + surname.toLowerCase());
             user.setEmail(user.getUsername() + "@epam.com");
             user.setNotCryptedPassword(password);
-            user.setPassword(passwordEncoder.encode(password));
+            user.setPassword(this.passwordEncoder().encode(password));
             user.setEnable(faker.bool().bool());
 
             // assign roles randomly

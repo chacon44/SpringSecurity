@@ -1,19 +1,31 @@
 package com.epam.esm.configuration;
 
-import static org.springframework.security.config.Customizer.*;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
+//import com.epam.esm.service.JwtTokenService;
+//import com.epam.esm.service.UserDetailsServiceImpl;
+import com.epam.esm.service.JwtTokenService;
 import com.epam.esm.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
+import org.springframework.security.oauth2.client.endpoint.WebClientReactiveAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -24,47 +36,35 @@ public class SecurityConfiguration {
   UserDetailsServiceImpl userDetailsService;
 
   @Autowired
-  PasswordEncoderConfig passwordEncoder;
+  private JwtTokenService tokenService;
 
-  @Bean
-  public DaoAuthenticationProvider authenticationProvider() {
-    DaoAuthenticationProvider auth = new DaoAuthenticationProvider();
-    auth.setUserDetailsService(userDetailsService); // Set the UserDetailsService
-    auth.setPasswordEncoder(passwordEncoder); // Set the PasswordEncoder
-    return auth;
-  }
+  @Autowired
+  PasswordEncoder passwordEncoder;
 
-  @Override
-  protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-    auth.authenticationProvider(authenticationProvider());
-  }
 
+  //TODO do filterchain for basic auth, and other one for token authentication
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+    authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
+    AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
     http.csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry ->
             authorizationManagerRequestMatcherRegistry
-                .requestMatchers(HttpMethod.DELETE).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH).hasRole("ADMIN")
-                //.requestMatchers(HttpMethod.POST).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT).hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET).hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/admin/**").hasAnyRole("ADMIN")
-                .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/login/**").permitAll()
-                .requestMatchers("/customlogin").permitAll()
+                .requestMatchers(HttpMethod.DELETE).hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.PATCH).hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.POST).hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.PUT).hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.GET).hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
+                .requestMatchers("/login/**", "/api/**").permitAll()
                 .anyRequest().authenticated())
-        .httpBasic(withDefaults())
-        //.oauth2Login(oauth2Login -> oauth2Login.loginPage("/customlogin"))
         .sessionManagement(sessionManagement ->
             sessionManagement
-                .sessionCreationPolicy(STATELESS));
+                .sessionCreationPolicy(STATELESS))
+        .authenticationManager(authenticationManager)
+        .httpBasic(Customizer.withDefaults())
+    ;
 
     return http.build();
-  }
-
-  @Autowired
-  public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-    auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder.passwordEncoder());
   }
 }
