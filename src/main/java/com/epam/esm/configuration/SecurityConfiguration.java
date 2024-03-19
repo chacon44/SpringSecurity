@@ -10,8 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -35,10 +35,14 @@ public class SecurityConfiguration {
   @Order(1)
   public SecurityFilterChain basicAuthFilterChain(HttpSecurity http) throws Exception {
 
+    AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+    authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
+    AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
+
     http
         .securityMatcher("/api/login")
         .csrf(AbstractHttpConfigurer::disable)
-        .httpBasic(Customizer.withDefaults())
+        .httpBasic(withDefaults())
         .authorizeHttpRequests(authorize -> authorize
             .requestMatchers(DELETE).hasRole("ADMIN")
             .requestMatchers(PATCH).hasRole("ADMIN")
@@ -46,29 +50,32 @@ public class SecurityConfiguration {
             .requestMatchers(PUT).hasRole("ADMIN")
             .requestMatchers(GET).hasAnyRole("USER", "ADMIN")
             .anyRequest().authenticated())
-        .sessionManagement(session -> session.sessionCreationPolicy(STATELESS));
+        .authenticationManager(authenticationManager)
+        .sessionManagement(session ->
+            session.sessionCreationPolicy(STATELESS)
+        );
 
     return http.build();
   }
-
-  @Bean
-  @Order(2)
-  public SecurityFilterChain githubOAuth2SecurityFilterChain(HttpSecurity http) throws Exception {
-
-    http
-        .securityMatcher("/api/github/login", "/oauth2/**", "/login/oauth2/code/**")
-        .csrf(AbstractHttpConfigurer::disable)
-        .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-            .requestMatchers(DELETE).hasRole("ADMIN")
-            .requestMatchers(PATCH).hasRole("ADMIN")
-            .requestMatchers(POST).hasRole("ADMIN")
-            .requestMatchers(PUT).hasRole("ADMIN")
-            .requestMatchers(GET).hasAnyRole("USER", "ADMIN")
-            .anyRequest().authenticated())
-        .oauth2Login(withDefaults());
-
-    return http.build();
-  }
+//
+//  @Bean
+//  @Order(2)
+//  public SecurityFilterChain githubOAuth2SecurityFilterChain(HttpSecurity http) throws Exception {
+//
+//    http
+//        .securityMatcher("/api/github/login", "/oauth2/**", "/login/oauth2/code/**")
+//        .csrf(AbstractHttpConfigurer::disable)
+//        .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+//            .requestMatchers(DELETE).hasRole("ADMIN")
+//            .requestMatchers(PATCH).hasRole("ADMIN")
+//            .requestMatchers(POST).hasRole("ADMIN")
+//            .requestMatchers(PUT).hasRole("ADMIN")
+//            .requestMatchers(GET).hasAnyRole("USER", "ADMIN")
+//            .anyRequest().authenticated())
+//        .oauth2Login(withDefaults());
+//
+//    return http.build();
+//  }
 
   @Bean
   @Order(3)
@@ -109,6 +116,7 @@ public class SecurityConfiguration {
       AuthoritiesFromUsernameConverter authoritiesFromUsernameConverter) {
     JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
     jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(authoritiesFromUsernameConverter);
+
     return jwtAuthenticationConverter;
   }
 }
