@@ -37,8 +37,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("api/certificate")
+@RequestMapping("api")
 public class CertificatesController {
+
+    private final String ADMIN = "/admin/certificates";
+    private final String USER = "/certificates";
+    private final String ID = "/{id}";
+    private final String REVISIONS = "/revisions";
 
     @Autowired
     private CertificateService certificateService;
@@ -53,7 +58,7 @@ public class CertificatesController {
      * @param requestDTO The data of the new certificate to create.
      * @return A ResponseEntity containing the saved certificate as a CertificateResponseDTO.
      */
-    @PostMapping(value="/admin", consumes = {"application/json"}, produces = {"application/json"})
+    @PostMapping(value= ADMIN, consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<EntityModel<CertificateResponseDTO>> postCertificate(@RequestBody CertificateRequestDTO requestDTO) {
         GiftCertificate giftCertificate = new GiftCertificate(
             requestDTO.name(),
@@ -77,7 +82,7 @@ public class CertificatesController {
      * @param id The id of the certificate to be retrieved.
      * @return A ResponseEntity containing the certificate as a CertificateResponseDTO.
      */
-    @GetMapping("/{id}")
+    @GetMapping(USER + ID)
     public ResponseEntity<EntityModel<CertificateResponseDTO>> getCertificate(@PathVariable long id) {
         CertificateResponseDTO certificateDTO = certificateService.getGiftCertificate(id);
         EntityModel<CertificateResponseDTO> resource = EntityModel.of(certificateDTO);
@@ -93,7 +98,7 @@ public class CertificatesController {
      * @param id The id of the certificate for which revisions are to be fetched.
      * @return A ResponseEntity containing all revisions of the certificate as a List.
      */
-    @GetMapping("/{id}/revisions")
+    @GetMapping(USER + ID + REVISIONS)
     public ResponseEntity<?> getCertificateRevisions(@PathVariable long id) {
         AuditReader reader = auditReaderService.getReader();
         AuditQuery query = reader.createQuery().forRevisionsOfEntity(GiftCertificate.class, true, true);
@@ -120,7 +125,7 @@ public class CertificatesController {
      * @param assembler Helps convert the Page into a PagedModel.
      * @return A ResponseEntity containing a PagedModel of CertificateResponseDTOs.
      */
-    @GetMapping
+    @GetMapping(USER)
     public ResponseEntity<PagedModel<EntityModel<CertificateResponseDTO>>> getFilteredCertificates(
         @RequestParam(required = false) List<String> tagName,
         @RequestParam(required = false) String searchWord,
@@ -147,7 +152,7 @@ public class CertificatesController {
      * @param id The id of the certificate to be deleted.
      * @return A ResponseEntity with the status code.
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping(ADMIN + ID)
     public ResponseEntity<Void> deleteCertificate(@PathVariable long id) {
         certificateService.deleteGiftCertificate(id);
         return ResponseEntity.status(NO_CONTENT).build();
@@ -160,7 +165,7 @@ public class CertificatesController {
      * @param requestDTO The new data for the certificate.
      * @return A ResponseEntity containing the updated certificate as a CertificateResponseDTO.
      */
-    @PatchMapping("/{id}")
+    @PatchMapping(ADMIN + ID)
     public ResponseEntity<EntityModel<CertificateResponseDTO>> updateCertificate(@PathVariable Long id,
         @RequestBody CertificateRequestDTO requestDTO){
         CertificateResponseDTO returnCertificate = certificateService.updateGiftCertificate(id,

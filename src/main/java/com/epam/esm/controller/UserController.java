@@ -29,8 +29,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api")
 public class UserController {
+
+  private final String USER = "/user";
+  private final String ID = "/{id}";
+  private final String REVISIONS = "/revisions";
 
   @Autowired
   private UserService userService;
@@ -52,7 +56,7 @@ public class UserController {
    * @param assembler Assembles the paged results into the required format.
    * @return A ResponseEntity containing the paged list of users in the response body.
    */
-  @GetMapping
+  @GetMapping(USER)
   public ResponseEntity<PagedModel<EntityModel<UserDTO>>> getAllUsers(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
@@ -74,7 +78,7 @@ public class UserController {
    * @param id The id of the User to retrieve.
    * @return A ResponseEntity containing the UserDTO in the response body.
    */
-  @GetMapping("/{id}")
+  @GetMapping(USER + ID)
   public ResponseEntity<EntityModel<UserDTO>> getUser(@PathVariable Long id) {
     UserDTO userDTO = userService.getUser(id);
     EntityModel<UserDTO> resource = EntityModel.of(userDTO);
@@ -88,7 +92,7 @@ public class UserController {
    * @param id The id of the User for which to fetch revisions.
    * @return A ResponseEntity containing all revisions of the User as a List.
    */
-  @GetMapping("/{id}/revisions")
+  @GetMapping(USER + ID + REVISIONS)
   public ResponseEntity<?> getUserRevisions(@PathVariable long id) {
     AuditReader reader = auditReaderService.getReader();
     AuditQuery query = reader.createQuery().forRevisionsOfEntity(User.class, true, true);

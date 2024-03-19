@@ -32,8 +32,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/order")
+@RequestMapping("/api")
 public class OrderController {
+
+  private final String ADMIN = "/admin/order";
+  private final String USER = "/order";
+  private final String ID = "/{id}";
+  private final String REVISIONS = "/revisions";
 
   @Autowired
   private OrderService orderService;
@@ -52,7 +57,7 @@ public class OrderController {
    * @param orderRequestDto Contains the ids of the User and the Gift Certificate.
    * @return A ResponseEntity containing the OrderResponseDTO.
    */
-  @PostMapping("/admin")
+  @PostMapping(ADMIN)
   public ResponseEntity<EntityModel<OrderResponseDTO>> purchaseGiftCertificate(@RequestBody OrderRequestDTO orderRequestDto) {
     OrderResponseDTO OrderResponseDTO = orderService.purchaseGiftCertificate(orderRequestDto.userId(), orderRequestDto.certificateId());
     EntityModel<OrderResponseDTO> resource = EntityModel.of(OrderResponseDTO);
@@ -69,7 +74,7 @@ public class OrderController {
    * @param assembler Helps convert the Page into a PagedModel.
    * @return A ResponseEntity containing a PagedModel of OrderResponseDTO.
    */
-  @GetMapping
+  @GetMapping(USER)
   public ResponseEntity<PagedModel<EntityModel<OrderResponseDTO>>> getAllOrders(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
@@ -140,22 +145,19 @@ public class OrderController {
    * @param id The id of the Order for which revisions are to be fetched.
    * @return A ResponseEntity containing a list of all Order revisions.
    */
-  @GetMapping(value = "/{id}/revisions")
+  @GetMapping(value = USER + ID + REVISIONS)
   public ResponseEntity<?> getOrderRevisions(@PathVariable long id) {
     AuditReader reader = auditReaderService.getReader();
     AuditQuery query = reader.createQuery().forRevisionsOfEntity(Order.class, true, true);
     query.addOrder(AuditEntity.revisionNumber().desc());
     List<Order> resultList = new ArrayList<>();
 
-    //return OrderDTO list
     List <Number> revisionNumbers = reader.getRevisions(Order.class, id);
     for (Number rev : revisionNumbers) {
       Order auditedCOrder = reader.find(Order.class, id, rev);
       resultList.add(auditedCOrder);
     }
 
-    //make the conversion here before return
-    //map the list to DTO
     return ResponseEntity.ok(resultList);
   }
 
