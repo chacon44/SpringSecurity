@@ -1,34 +1,36 @@
 package com.epam.esm.controller;
 
-import static org.springframework.security.core.context.SecurityContextHolder.getContext;
-
 import com.epam.esm.dto.JwtResponse;
 import com.epam.esm.service.GithubUserService;
 import com.epam.esm.service.JwtService;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController()
+@RequestMapping("/api")
 public class LoginController {
 
   private final JwtService jwtService;
   private final GithubUserService githubUserService;
 
-  public LoginController(JwtService jwtService,
-      GithubUserService githubUserService) {
+  public LoginController(JwtService jwtService, GithubUserService githubUserService) {
     this.jwtService = jwtService;
     this.githubUserService = githubUserService;
   }
 
-  @GetMapping("/api/login")
+  @GetMapping("/login")
   public JwtResponse login() {
-    String username = getContext().getAuthentication().getPrincipal().toString();
-    String jwt = jwtService.generateToken(username);
+
+    User principal = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    String jwt = jwtService.generateToken(principal.getUsername());
 
     return new JwtResponse(jwt);
   }
 
-  @GetMapping("/api/github/login")
+  @GetMapping("/github/login")
   public JwtResponse githubLogin() {
     String jwt = jwtService.generateToken(githubUserService.getDefaultGithubUsername());
     return new JwtResponse(jwt);

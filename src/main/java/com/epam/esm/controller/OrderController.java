@@ -35,8 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class OrderController {
 
-  private final String ADMIN = "/admin/order";
-  private final String USER = "/order";
+  private final String ORDER = "/order";
   private final String ID = "/{id}";
   private final String REVISIONS = "/revisions";
 
@@ -57,7 +56,7 @@ public class OrderController {
    * @param orderRequestDto Contains the ids of the User and the Gift Certificate.
    * @return A ResponseEntity containing the OrderResponseDTO.
    */
-  @PostMapping(ADMIN)
+  @PostMapping(ORDER)
   public ResponseEntity<EntityModel<OrderResponseDTO>> purchaseGiftCertificate(@RequestBody OrderRequestDTO orderRequestDto) {
     OrderResponseDTO OrderResponseDTO = orderService.purchaseGiftCertificate(orderRequestDto.userId(), orderRequestDto.certificateId());
     EntityModel<OrderResponseDTO> resource = EntityModel.of(OrderResponseDTO);
@@ -74,7 +73,7 @@ public class OrderController {
    * @param assembler Helps convert the Page into a PagedModel.
    * @return A ResponseEntity containing a PagedModel of OrderResponseDTO.
    */
-  @GetMapping(USER)
+  @GetMapping(ORDER)
   public ResponseEntity<PagedModel<EntityModel<OrderResponseDTO>>> getAllOrders(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
@@ -99,7 +98,7 @@ public class OrderController {
    * @param id The id of the Order to be retrieved.
    * @return A ResponseEntity containing the OrderResponseDTO.
    */
-  @GetMapping("/{id}")
+  @GetMapping(ORDER + ID)
   public ResponseEntity<EntityModel<OrderResponseDTO>> getOrder(@PathVariable Long id) {
     OrderResponseDTO OrderResponseDTO = orderService.getOrder(id);
     EntityModel<OrderResponseDTO> resource = EntityModel.of(OrderResponseDTO);
@@ -117,7 +116,7 @@ public class OrderController {
    * @param assembler Helps convert the Page into a PagedModel.
    * @return A ResponseEntity containing a PagedModel of OrderResponseDTO.
    */
-  @GetMapping(value = "/users/{userId}", produces = {"application/json"})
+  @GetMapping(value = "/users" + ID, produces = {"application/json"})
   public ResponseEntity<PagedModel<EntityModel<OrderResponseDTO>>> getOrdersFromUser(
       @PathVariable Long userId,
       @RequestParam(defaultValue = "0") int page,
@@ -145,7 +144,7 @@ public class OrderController {
    * @param id The id of the Order for which revisions are to be fetched.
    * @return A ResponseEntity containing a list of all Order revisions.
    */
-  @GetMapping(value = USER + ID + REVISIONS)
+  @GetMapping(value = ORDER + ID + REVISIONS)
   public ResponseEntity<?> getOrderRevisions(@PathVariable long id) {
     AuditReader reader = auditReaderService.getReader();
     AuditQuery query = reader.createQuery().forRevisionsOfEntity(Order.class, true, true);

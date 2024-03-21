@@ -10,8 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -25,6 +23,9 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfiguration {
 
+  private final String ADMIN = "ROLE_ADMIN";
+  private final String USER = "ROLE_USER";
+
   @Autowired
   private UserDetailsServiceImpl userDetailsService;
 
@@ -35,53 +36,38 @@ public class SecurityConfiguration {
   @Order(1)
   public SecurityFilterChain basicAuthFilterChain(HttpSecurity http) throws Exception {
 
-    AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
-    authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
-    AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
-
     http
         .securityMatcher("/api/login")
         .csrf(AbstractHttpConfigurer::disable)
         .httpBasic(withDefaults())
         .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers(DELETE).hasRole("ADMIN")
-            .requestMatchers(PATCH).hasRole("ADMIN")
-            .requestMatchers(POST).hasRole("ADMIN")
-            .requestMatchers(PUT).hasRole("ADMIN")
-            .requestMatchers(GET).hasAnyRole("USER", "ADMIN")
             .anyRequest().authenticated())
-        .authenticationManager(authenticationManager)
         .sessionManagement(session ->
             session.sessionCreationPolicy(STATELESS)
         );
 
     return http.build();
   }
-//
-//  @Bean
-//  @Order(2)
-//  public SecurityFilterChain githubOAuth2SecurityFilterChain(HttpSecurity http) throws Exception {
-//
-//    http
-//        .securityMatcher("/api/github/login", "/oauth2/**", "/login/oauth2/code/**")
-//        .csrf(AbstractHttpConfigurer::disable)
-//        .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-//            .requestMatchers(DELETE).hasRole("ADMIN")
-//            .requestMatchers(PATCH).hasRole("ADMIN")
-//            .requestMatchers(POST).hasRole("ADMIN")
-//            .requestMatchers(PUT).hasRole("ADMIN")
-//            .requestMatchers(GET).hasAnyRole("USER", "ADMIN")
-//            .anyRequest().authenticated())
-//        .oauth2Login(withDefaults());
-//
-//    return http.build();
-//  }
+
+  @Bean
+  @Order(2)
+  public SecurityFilterChain githubOAuth2SecurityFilterChain(HttpSecurity http) throws Exception {
+
+    http
+        .securityMatcher("/api/github/login", "/oauth2/**", "/login/oauth2/code/**")
+        .csrf(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+            .anyRequest().authenticated())
+        .oauth2Login(withDefaults());
+
+    return http.build();
+  }
 
   @Bean
   @Order(3)
   public SecurityFilterChain permitAllSecurityFilterChain(HttpSecurity http) throws Exception {
     http
-        .securityMatcher("/unsecured/**")
+        .securityMatcher("/api/guest/**")
         .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -95,11 +81,13 @@ public class SecurityConfiguration {
         .securityMatcher("/api/**")
         .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers(DELETE).hasRole("ADMIN")
-            .requestMatchers(PATCH).hasRole("ADMIN")
-            .requestMatchers(POST).hasRole("ADMIN")
-            .requestMatchers(PUT).hasRole("ADMIN")
-            .requestMatchers(GET).hasAnyRole("USER", "ADMIN")
+            .requestMatchers(DELETE).hasAuthority(ADMIN)
+            .requestMatchers(PATCH).hasAuthority(ADMIN)
+            .requestMatchers(POST, "/api/user").permitAll()
+            .requestMatchers(POST, "/api/order").hasAnyAuthority(USER, ADMIN)
+            .requestMatchers(POST, "/api/tag").hasAuthority(ADMIN)
+            .requestMatchers(POST, "/api/certificate").hasAuthority(ADMIN)
+            .requestMatchers(GET).hasAnyAuthority(USER, ADMIN)
         )
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .oauth2ResourceServer(oauth2 -> oauth2

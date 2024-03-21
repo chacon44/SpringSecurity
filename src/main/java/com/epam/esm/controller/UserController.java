@@ -4,6 +4,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import com.epam.esm.dto.UserDTO;
+import com.epam.esm.dto.UserRegistering;
 import com.epam.esm.model.User;
 import com.epam.esm.service.AuditReaderService;
 import com.epam.esm.service.UserService;
@@ -24,6 +25,8 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class UserController {
 
+  private final String GUEST = "/guest";
   private final String USER = "/user";
   private final String ID = "/{id}";
   private final String REVISIONS = "/revisions";
@@ -47,6 +51,13 @@ public class UserController {
     this.auditReaderService = auditReaderService;
   }
 
+  @PostMapping(USER)
+  public ResponseEntity<UserDTO> postUser(@RequestBody UserRegistering userRegistering){
+
+    UserDTO newUserDTO = userService.registerUser(userRegistering);
+
+    return ResponseEntity.ok(newUserDTO);
+  }
   /**
    * Retrieves a list of all Users, paged according to the provided parameters.
    *
@@ -56,7 +67,7 @@ public class UserController {
    * @param assembler Assembles the paged results into the required format.
    * @return A ResponseEntity containing the paged list of users in the response body.
    */
-  @GetMapping(USER)
+  @GetMapping(GUEST + USER)
   public ResponseEntity<PagedModel<EntityModel<UserDTO>>> getAllUsers(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size,
@@ -78,7 +89,7 @@ public class UserController {
    * @param id The id of the User to retrieve.
    * @return A ResponseEntity containing the UserDTO in the response body.
    */
-  @GetMapping(USER + ID)
+  @GetMapping(GUEST + USER + ID)
   public ResponseEntity<EntityModel<UserDTO>> getUser(@PathVariable Long id) {
     UserDTO userDTO = userService.getUser(id);
     EntityModel<UserDTO> resource = EntityModel.of(userDTO);
@@ -92,7 +103,7 @@ public class UserController {
    * @param id The id of the User for which to fetch revisions.
    * @return A ResponseEntity containing all revisions of the User as a List.
    */
-  @GetMapping(USER + ID + REVISIONS)
+  @GetMapping(GUEST + USER + ID + REVISIONS)
   public ResponseEntity<?> getUserRevisions(@PathVariable long id) {
     AuditReader reader = auditReaderService.getReader();
     AuditQuery query = reader.createQuery().forRevisionsOfEntity(User.class, true, true);

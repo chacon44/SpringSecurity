@@ -15,7 +15,6 @@ public class GithubUserService {
 
   public boolean isGithubUser(String username) { return GITHUB_USERNAME.equals(username);}
 
-
   public Collection<GrantedAuthority> getGithubUserAuthorities() {
     return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
   }

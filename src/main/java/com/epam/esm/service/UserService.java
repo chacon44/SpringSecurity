@@ -1,26 +1,59 @@
 package com.epam.esm.service;
 
 import static com.epam.esm.exceptions.Messages.USER_ID_NOT_FOUND;
+import static java.lang.Boolean.TRUE;
 
 import com.epam.esm.dto.UserDTO;
+import com.epam.esm.dto.UserRegistering;
 import com.epam.esm.exceptions.CustomizedException;
 import com.epam.esm.exceptions.ErrorCode;
+import com.epam.esm.model.Role;
 import com.epam.esm.model.User;
+import com.epam.esm.repository.RoleRepository;
 import com.epam.esm.repository.UserRepository;
+import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
 
   private final UserRepository userRepository;
+  private final RoleRepository roleRepository;
 
-  public UserService(UserRepository userRepository) {
+  @Autowired
+  private PasswordEncoder passwordEncoder;
+
+  public UserService(UserRepository userRepository, RoleRepository roleRepository) {
     this.userRepository = userRepository;
+    this.roleRepository = roleRepository;
   }
 
+  public UserDTO registerUser(UserRegistering newUser){
+
+    User registeredUser = new User();
+
+    registeredUser.setEnable(TRUE);
+    registeredUser.setName(newUser.name());
+    registeredUser.setEmail(newUser.email());
+    registeredUser.setUsername(newUser.username());
+    registeredUser.setNotCryptedPassword(newUser.password());
+
+    String encryptedPassword = passwordEncoder.encode(newUser.password());
+    registeredUser.setPassword(encryptedPassword);
+
+    Set<Role> role = Set.of(roleRepository.findById(1L).get());
+    registeredUser.setRoles(role);
+
+    userRepository.save(registeredUser);
+    Long id = userRepository.findByUsername(registeredUser.getUsername()).getId();
+
+    return new UserDTO(id, registeredUser.getUsername());
+  }
   /**
    * Retrieves a page of Users, represented as UserDTOs.
    *

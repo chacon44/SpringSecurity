@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class TagsController {
 
+    private final String GUEST = "/guest";
     private final String TAG = "/tag";
     private final String ID = "/{id}";
     private final String REVISIONS = "/revisions";
@@ -79,7 +80,7 @@ public class TagsController {
      * @param assembler Helps convert the Page into a PagedModel.
      * @return A ResponseEntity containing a PagedModel with all Tags.
      */
-    @GetMapping(TAG)
+    @GetMapping(GUEST + TAG)
     public ResponseEntity<PagedModel<EntityModel<TagResponseDTO>>> getAllTags(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size,
@@ -102,7 +103,7 @@ public class TagsController {
      *
      * @return A ResponseEntity containing the most used Tag as a TagResponseDTO.
      */
-    @GetMapping(value = TAG + "/most-used-tag")
+    @GetMapping(value = GUEST + TAG + "/most-used-tag")
     public ResponseEntity<EntityModel<TagResponseDTO>> getMostUsedTag(){
         TagResponseDTO tagResponseDTO = tagService.getMostUsedTag();
         EntityModel<TagResponseDTO> resource = EntityModel.of(tagResponseDTO);
@@ -130,7 +131,7 @@ public class TagsController {
      * @param id The id of the Tag to be retrieved.
      * @return A ResponseEntity containing the TagResponseDTO.
      */
-    @GetMapping(TAG + ID)
+    @GetMapping(GUEST + TAG + ID)
     public ResponseEntity<EntityModel<TagResponseDTO>> getTag(@PathVariable Long id) {
         TagResponseDTO tagResponseDTO = tagService.getTag(id);
         EntityModel<TagResponseDTO> resource = EntityModel.of(tagResponseDTO);
@@ -144,7 +145,7 @@ public class TagsController {
      * @param id The id of the Tag for which to fetch revisions.
      * @return A ResponseEntity containing all revisions of the Tag as a List.
      */
-    @GetMapping(TAG + ID + REVISIONS)
+    @GetMapping(GUEST + TAG + ID + REVISIONS)
     public ResponseEntity<?> getTagRevisions(@PathVariable long id) {
         AuditReader reader = auditReaderService.getReader();
         AuditQuery query = reader.createQuery().forRevisionsOfEntity(Tag.class, true, true);
